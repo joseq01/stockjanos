@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Pantalla Flotante Ampliada</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    /* Fondo oscuro semi-transparente */
+    #pantallaFlotante {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    /* Cuadro blanco grande centrado */
+    #contenidoFlotante {
+      background-color: white;
+      padding: 40px;
+      border-radius: 10px;
+      width: 80vw;
+      height: 80vh;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+      overflow-y: auto;
+    }
+
+    .botones {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    button {
+      margin-left: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .btn-cerrar {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .btn-guardar {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .checkbox-item {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Ejemplo de Pantalla Flotante Grande</h2>
+  <button onclick="mostrarPantalla()">Mostrar Pantalla</button>
+
+  <!-- Pantalla flotante -->
+  <div id="pantallaFlotante">
+    <div id="contenidoFlotante">
+      <h3>Seleccione los datos que desea guardar:</h3>
+      <div class="checkbox-item">
+        <input type="checkbox" id="dato1"> <label for="dato1">Dato A</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="dato2"> <label for="dato2">Dato B</label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="dato3"> <label for="dato3">Dato C</label>
+      </div>
+
+      <div class="botones">
+        <button class="btn-cerrar" onclick="cerrarPantalla()">✕ Cerrar</button>
+        <button class="btn-guardar" onclick="guardarDatos()">💾 Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function mostrarPantalla() {
+      document.getElementById("pantallaFlotante").style.display = "flex";
+    }
+
+    function cerrarPantalla() {
+      document.getElementById("pantallaFlotante").style.display = "none";
+    }
+
+    function guardarDatos() {
+      const seleccionados = [];
+      if (document.getElementById("dato1").checked) seleccionados.push("Dato A");
+      if (document.getElementById("dato2").checked) seleccionados.push("Dato B");
+      if (document.getElementById("dato3").checked) seleccionados.push("Dato C");
+
+      alert("Datos guardados: " + (seleccionados.length > 0 ? seleccionados.join(", ") : "ninguno"));
+      cerrarPantalla();
+    }
+
+    // Evitar cierre por clic fuera del contenido
+    document.getElementById("pantallaFlotante").addEventListener("click", function(e) {
+      if (e.target === this) {
+        e.stopPropagation();
+      }
+    });
+  </script>
+
+</body>
+</html>

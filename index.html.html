@@ -1,0 +1,1336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mi Página con Menú</title>
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <style>
+    .nav-link:hover {
+      color: #ffc107 !important;
+    }
+
+    .navbar {
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #logo {
+      max-height: 50px;
+    }
+
+    /* Menú desplegable personalizado */
+    .dropdown-ajuste {
+      position: relative;
+    }
+
+    .dropdown-ajuste .dropdown-menu {
+      display: none;
+      position: absolute;
+      top: 0;
+      right: 100%; /* posiciona el menú hacia la izquierda del botón */
+      background-color: rgba(0, 0, 0, 0.85);
+      color: white;
+      border-radius: 0.5rem;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+      min-width: 180px;
+      z-index: 1050;
+    }
+
+    .dropdown-ajuste:hover .dropdown-menu {
+      display: block;
+    }
+
+    .dropdown-ajuste .dropdown-menu a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 15px;
+      display: block;
+    }
+
+    .dropdown-ajuste .dropdown-menu a:hover {
+      background-color: rgba(255, 193, 7, 0.3);
+    }
+
+    #filtroDropdown {
+  display: none;
+  position: absolute;
+  z-index: 3000;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 6px;
+  width: 240px;
+  max-height: 300px;
+  overflow: auto;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.sticky-bottom {
+  z-index: 999; /* menor que el 3000 del filtro */
+  position: sticky; /* asegurate que se mantenga sticky */
+  bottom: 0;
+}
+
+    .pantalla-flotante {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.pantalla-flotante .contenido {
+  background-color: white;
+  padding: 20px;
+  border-radius: 1rem;
+  max-width: 800px;
+  width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
+}
+
+
+.combo-card {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 0.5rem;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.swal2-container {
+  z-index: 11000 !important;
+}
+
+body {
+  padding-top: 70px; /* Ajustá este valor si tu navbar es más alto o más bajo */
+}
+
+  </style>
+
+</head>
+<body class="d-flex flex-column min-vh-100">
+  <!-- Menú de navegación -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+
+    <div class="container-fluid d-flex justify-content-between align-items-center px-4">
+      <!-- Izquierda: Logo y título -->
+      <div class="d-flex align-items-center">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+          <img id="logo" src="./image/Logos-Janos.png" alt="logojanos" />
+          <span class="ms-3 text-white small">Logística</span>
+        </a>
+
+        <div class="collapse navbar-collapse show ms-4" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="#stock">Stock</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="./paginas/logiticaingreso.html">Ingreso</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="./paginas/logisticapedidos.html">Pedidos</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Derecha: Ajuste con menú hacia la izquierda -->
+      <div class="dropdown-ajuste">
+        <a class="nav-link text-white" href="#" id="ajusteLink">Ajuste</a>
+        <div class="dropdown-menu">
+          <a class="dropdown-item" href="#" onclick="abrirFlotante('modalEditarCombos')">editar combos</a>
+          <a class="dropdown-item" href="#" onclick="abrirFlotante('modalArticulos')">agr/elim articulo</a>
+          <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modalAgregarSalon">agregar salones</a>
+          <a class="dropdown-item" href="#" onclick="abrirFlotante('modalAmbientacion4')">Ambientación 4</a>
+        </div>
+        
+      </div>
+    </div>
+  </nav>
+
+  <!-- Contenido -->
+  <div id="contenido-imprimir" class="container mt-5 flex-grow-1">
+  <h4 class="text-center mb-4">Stock Actual</h4>
+
+<div class="row mb-3">
+  <div class="col-md-4">
+    <label for="salonDestino" class="form-label">Salón</label>
+    <input type="text" id="selectorSalon" class="form-control" list="listaSalones" placeholder="Elegí o escribí un salón..." onchange="guardarSalonSeleccionado()" />
+    <datalist id="listaSalones"></datalist>
+  </div>
+  
+  </div>
+
+  <!-- Tabla -->
+  <table class="table table-bordered" id="tablaStock">
+    <thead>
+      <tr>
+        <th>Categoria</th>
+        <th>Artículo</th>
+        <th>Ingresos </th>
+        <th>Pedidos </th>
+        <th>Stock Actual</th>
+      </tr>
+    </thead>
+    <tbody id="tablaStockActual"></tbody>
+  </table>
+
+  <div class="d-flex justify-content-between bg-white py-2 px-4 border-top" style="position:sticky; bottom:0; z-index:1020;">
+    <button class="btn btn-success" onclick="guardarCambios()">Guardar Cambios</button>
+    <button class="btn btn-secondary no-print" onclick="window.print()">Imprimir</button>
+  </div>
+</div>
+
+<!-- Filtro flotante -->
+<div id="filtroDropdown" style="display:none; position:absolute; z-index:999; background:#fff; border:1px solid #ccc; padding:10px; border-radius:6px; width:220px;">
+  <input type="text" id="filtroInput" placeholder="Buscar..." oninput="filtrarOpciones()" class="form-control mb-2">
+  <div id="opcionesFiltro" style="max-height:200px; overflow-y:auto;"></div>
+  <div class="mt-2 text-end">
+    <button onclick="aplicarFiltro()" class="btn btn-sm btn-primary">Aplicar</button>
+    <button onclick="limpiarFiltro()" class="btn btn-sm btn-secondary">Limpiar</button>
+  </div>
+</div>
+
+
+<!-- Mensajes -->
+<div id="mensajeConfirmacion" class="alert alert-success text-center mx-3 d-none" role="alert">Pedidos actualizados correctamente.</div>
+<div id="mensajeCarga" class="alert alert-warning text-center mx-3 d-none" role="alert">Cargando datos... Esto podría tardar un momento.</div>
+
+ 
+<!-- Modal para editar combos -->
+<div id="modalEditarCombos" class="pantalla-flotante">
+  <div class="contenido position-relative">
+    <button class="btn-close position-absolute top-0 end-0 m-3" onclick="cerrarFlotante('modalEditarCombos')"></button>
+    <h5 class="mb-3">Editar Combos</h5>
+
+    <div class="mb-3">
+      <label for="nombreCombo" class="form-label">Nombre del Combo</label>
+      <input type="text" class="form-control w-50" id="nombreCombo" list="listaCombos" placeholder="ingrese nombre del combo">
+      <datalist id="listaCombos"></datalist>
+    </div>
+
+    <div id="contenedorNuevosCombos"></div>
+
+    <div class="d-flex justify-content-between mt-3">
+      <button class="btn btn-secondary" onclick="agregarFilaCombo()">Agregar artículo</button>
+      <button class="btn btn-primary" onclick="guardarTodoCombo()">Guardar Combo</button>
+      <button class="btn btn-danger" onclick="eliminarComboConConfirmacion()">Eliminar Combo</button>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Modal para agregar/eliminar artículos -->
+<div id="modalArticulos" class="pantalla-flotante">
+  <div class="contenido position-relative">
+    <button class="btn-close position-absolute top-0 end-0 m-3" onclick="cerrarFlotante('modalArticulos')"></button>
+    <h5 class="mb-3">Agregar / Eliminar Artículos</h5>
+
+    <form id="formularioArticulo">
+      <input type="hidden" id="idArticulo">
+
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="articulo" class="form-label">Artículo</label>
+          <input list="listaArticulos" id="articulo" class="form-control" required>
+          <datalist id="listaArticulos"></datalist>
+        </div>
+
+        <div class="col-md-3">
+          <label for="unidades" class="form-label">Unidades</label>
+          <input type="number" id="unidades" class="form-control" min="0" required>
+        </div>
+
+        <div class="col-md-3">
+          <label for="cajaPack" class="form-label">Caja / Pack</label>
+          <input type="text" id="cajaPack" class="form-control">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label for="categoria" class="form-label">Categoría</label>
+        <input type="text" id="categoria" class="form-control" required>
+      </div>
+
+      <div class="d-flex justify-content-between">
+        <button type="submit" class="btn btn-success">Guardar</button>
+        <button type="button" id="btnEliminarArticulo" class="btn btn-danger">Eliminar</button>
+        <div id="alertaArticuloExistente" class="alert alert-warning mt-3 d-none rounded-3 shadow-sm" role="alert">
+          ⚠️ El artículo ya existe. Se actualizará.
+        </div>   
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Modal Agregar Salón -->
+<div class="modal fade" id="modalAgregarSalon" tabindex="-1" aria-labelledby="modalAgregarSalonLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-white rounded-4 shadow-lg">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalAgregarSalonLabel">Agregar o Modificar Salón</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body px-4">
+        <form id="formularioSalon">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <label for="nombreSalon" class="form-label">Salón</label>
+              <input type="text" class="form-control" id="nombreSalon" list="listaSalones" >
+              <datalist id="listaSalones"></datalist>
+            </div>
+            <div class="col-md-6">
+              <label for="direccionSalon" class="form-label">Dirección</label>
+              <input type="text" class="form-control" id="direccionSalon" required>
+            </div>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label for="cpSalon" class="form-label">CP</label>
+              <input type="text" class="form-control" id="cpSalon" required>
+            </div>
+            <div class="col-md-4">
+              <label for="localidadSalon" class="form-label">Localidad</label>
+              <input type="text" class="form-control" id="localidadSalon" required>
+            </div>
+            <div class="col-md-4">
+              <label for="provinciaSalon" class="form-label">Provincia</label>
+              <input type="text" class="form-control" id="provinciaSalon" required>
+            </div>
+          </div>
+          <input type="hidden" id="idSalon">
+        </form>
+      </div>
+      <div class="modal-footer px-4">
+        <button type="button" class="btn btn-danger" id="btnEliminarSalon">Eliminar</button>
+        <button type="submit" class="btn btn-primary" form="formularioSalon">Modificar / Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Modal para ambientación 4 -->
+<div id="modalAmbientacion4" class="pantalla-flotante">
+  <div class="contenido position-relative">
+    <button class="btn-close position-absolute top-0 end-0 m-3" onclick="cerrarFlotante('modalAmbientacion4')"></button>
+    <h5 class="mb-3">Ambientación 4</h5>
+    <p>Contenido de ambientación 4.</p>
+  </div>
+</div>
+
+<div id="mensajeGuardado" style="
+  display: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: opacity 0.3s ease;
+  z-index: 9999;
+">
+  Guardado correctamente.
+</div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-analytics.js";
+    import {
+      getFirestore,
+      collection,
+      getDocs,
+      doc, 
+      setDoc, 
+      getDoc,
+      updateDoc,
+      addDoc,
+      deleteDoc,
+      query, 
+      where
+      } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+   
+    // Configuración Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBS2yswfrDzyOzlP2aJRkws8sX8930DvYY",
+      authDomain: "stock-janos.firebaseapp.com",
+      projectId: "stock-janos",
+      storageBucket: "stock-janos.firebasestorage.app",
+      messagingSenderId: "656905318444",
+      appId: "1:656905318444:web:90fd9780bb9f3c424ba189",
+      measurementId: "G-DGXEE6YHFX"
+    };
+  
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
+  
+    // Función para cargar salones
+    async function cargarSalones() {
+  const datalist = document.getElementById("listaSalones");
+  datalist.innerHTML = ""; // limpiar antes
+
+  const snapshot = await getDocs(collection(db, "salones"));
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    if (data.salones) {
+      const option = document.createElement("option");
+      option.value = data.salones;
+      datalist.appendChild(option);
+    }
+      });
+    }
+  
+//estructura comparacion ingreso-pedidos
+async function cargarStockActual() {
+  const salon = localStorage.getItem("salonSeleccionado");
+  if (!salon) {
+    alert("No hay salón seleccionado.");
+    return;
+  }
+
+  const tabla = document.getElementById("tablaStockActual");
+  tabla.innerHTML = "";
+
+  // Mapas para acumular unidades por artículo
+  const ingresos = new Map();
+  const pedidos = new Map();
+
+  // Cargar stock-ingreso
+  const ingresoRef = collection(db, "stock-ingreso");
+  const ingresoSnap = await getDocs(ingresoRef);
+  ingresoSnap.forEach((doc) => {
+    const data = doc.data();
+    if (data.origen === salon) {
+      const art = data.articulo;
+      const cant = parseInt(data.unidades) || 0;
+      ingresos.set(art, (ingresos.get(art) || 0) + cant);
+    }
+  });
+
+  // Cargar stock-pedidos
+  const pedidosRef = collection(db, "stock-pedidos");
+  const pedidosSnap = await getDocs(pedidosRef);
+  pedidosSnap.forEach((doc) => {
+    const data = doc.data();
+    if (data.origen === salon) {
+      const art = data.articulo;
+      const cant = parseInt(data.unidades) || 0;
+      pedidos.set(art, (pedidos.get(art) || 0) + cant);
+    }
+  });
+
+  // Unir claves de ambos mapas
+  const articulos = new Set([...ingresos.keys(), ...pedidos.keys()]);
+  articulos.forEach((articulo) => {
+  const ingreso = ingresos.get(articulo) || 0;
+  const pedido = pedidos.get(articulo) || 0;
+  const stock = ingreso - pedido;
+
+  // Buscar la categoría en los ingresos (podés ajustarlo para buscar en pedidos si fuera necesario)
+  let categoria = "";
+  ingresoSnap.forEach((doc) => {
+    const data = doc.data();
+    if (data.articulo === articulo && data.salones === salon && data.categoria) {
+      categoria = data.categoria;
+    }
+  });
+
+  const fila = `
+    <tr>
+      <td>${categoria}</td>
+      <td>${articulo}</td>
+      <td contenteditable="true" oninput="actualizarStock(this)">${ingreso}</td>
+      <td contenteditable="true" oninput="actualizarStock(this)">${pedido}</td>
+      <td class="stock-actual">${stock}</td>
+    </tr>
+  `;
+  tabla.insertAdjacentHTML("beforeend", fila);
+});
+}
+
+function actualizarStock(cell) {
+  const row = cell.parentElement;
+  const ingreso = parseInt(row.children[2].innerText) || 0;
+  const pedido = parseInt(row.children[3].innerText) || 0;
+  const stock = ingreso - pedido;
+  row.children[4].innerText = stock;
+}
+
+    // Ejecutar al cargar la página
+window.addEventListener("DOMContentLoaded", async () => {
+  await cargarSalones();
+});
+
+//cargar articulos
+const articulosRef = collection(db, "stock-articulos");
+// Guardar o actualizar artículo
+document.getElementById("formularioArticulo").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const idArticulo = document.getElementById("idArticulo").value;
+  const nombreArticulo = document.getElementById("articulo").value.trim().toLowerCase();
+  const articuloData = {
+    articulo: nombreArticulo,
+    categoria: document.getElementById("categoria").value.trim(),
+    unidades: parseInt(document.getElementById("unidades").value, 10) || 0,
+    cajaPack: document.getElementById("cajaPack").value.trim()
+  };
+  try {
+    const snapshot = await getDocs(articulosRef);
+    let articuloExistente = null;
+
+    snapshot.forEach(docSnap => {
+      const datos = docSnap.data();
+      if (datos.articulo.toLowerCase() === nombreArticulo) {
+        articuloExistente = { id: docSnap.id, ...datos };
+      }
+    });
+
+    // Si ya existe y es una edición
+    if (idArticulo || articuloExistente) {
+  if (!idArticulo && articuloExistente) {
+    const alerta = document.getElementById("alertaArticuloExistente");
+    alerta.classList.remove("d-none");
+
+    setTimeout(() => {
+      alerta.classList.add("d-none");
+    }, 4000);
+
+    return; // ❌ Detener aquí si ya existe y no es una edición
+  }
+
+  const ref = doc(db, "stock-articulos", idArticulo || articuloExistente.id);
+  await updateDoc(ref, articuloData);
+  mostrarMensaje("✅ Artículo actualizado");
+} else {
+  await addDoc(articulosRef, articuloData);
+  mostrarMensaje("✅ Artículo guardado");
+}
+
+    document.getElementById("formularioArticulo").reset();
+    document.getElementById("idArticulo").value = "";
+    cargarListaArticulos();
+  } catch (error) {
+    console.error("Error al guardar artículo:", error);
+    mostrarMensaje("❌ Error al guardar el artículo");
+  }
+});
+// Autocompletar lista de artículos
+window.cargarListaArticulos = async function () {
+  const snapshot = await getDocs(articulosRef);
+  const nombres = [];
+
+  snapshot.forEach((doc) => {
+    const datos = doc.data();
+    nombres.push({ id: doc.id, articulo: datos.articulo });
+  });
+
+  const datalist = document.getElementById("listaArticulos");
+  if (datalist) {
+    datalist.innerHTML = "";
+    nombres.forEach(a => {
+      const option = document.createElement("option");
+      option.value = a.articulo;
+      datalist.appendChild(option);
+    });
+  }
+};
+
+// Cargar datos al elegir un artículo
+document.getElementById("articulo").addEventListener("change", async () => {
+  const nombre = document.getElementById("articulo").value.trim();
+  if (!nombre) return;
+
+  const snapshot = await getDocs(articulosRef);
+  let encontrado = false;
+
+  for (const docSnap of snapshot.docs) {
+    const datos = docSnap.data();
+    if (datos.articulo.toLowerCase() === nombre.toLowerCase()) {
+      document.getElementById("categoria").value = datos.categoria || '';
+      document.getElementById("unidades").value = datos.unidades || 0;
+      document.getElementById("cajaPack").value = datos.cajaPack || '';
+      document.getElementById("idArticulo").value = docSnap.id;
+      encontrado = true;
+      break;
+    }
+  }
+
+  if (!encontrado) {
+    document.getElementById("categoria").value = '';
+    document.getElementById("unidades").value = '';
+    document.getElementById("cajaPack").value = '';
+    document.getElementById("idArticulo").value = '';
+  }
+});
+
+// Reset al abrir modal
+const modalArticulos = document.getElementById('modalArticulos');
+modalArticulos.addEventListener('show.bs.modal', () => {
+  document.getElementById("formularioArticulo").reset();
+  document.getElementById("idArticulo").value = "";
+});
+
+// Eliminar artículo
+document.getElementById("btnEliminarArticulo").addEventListener("click", async () => {
+  const id = document.getElementById("idArticulo").value;
+
+  if (!id) {
+    mostrarMensaje("⚠️ No se puede eliminar un artículo no guardado.");
+    return;
+  }
+
+  const result = await Swal.fire({
+    title: '¿Eliminar artículo?',
+    text: "Esta acción no se puede deshacer",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#aaa',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    await deleteDoc(doc(db, "stock-articulos", id));
+    mostrarMensaje("🗑️ Artículo eliminado correctamente");
+    document.getElementById("formularioArticulo").reset();
+    document.getElementById("idArticulo").value = "";
+    cargarListaArticulos();
+
+    cerrarFlotante('modalArticulos');
+
+  } catch (error) {
+    console.error("Error al eliminar:", error);
+    mostrarMensaje("❌ Error al eliminar el artículo");
+  }
+});
+
+// Cargar lista al iniciar
+document.addEventListener("DOMContentLoaded", cargarListaArticulos);
+
+
+//finaliza articulos
+
+// Carga salones
+const salonesRef = collection(db, "salones");
+
+document.getElementById("formularioSalon").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const idSalon = document.getElementById("idSalon").value; // si viene es edición
+  const salonData = {
+    nombre: document.getElementById("nombreSalon").value.trim(),
+    direccion: document.getElementById("direccionSalon").value,
+    cp: document.getElementById("cpSalon").value,
+    localidad: document.getElementById("localidadSalon").value,
+    provincia: document.getElementById("provinciaSalon").value
+  };
+
+  try {
+    if (idSalon) {
+      // Modo edición
+      const ref = doc(db, "salones", idSalon);
+      await updateDoc(ref, salonData);
+      mostrarMensaje("✅ Salón actualizado");
+    } else {
+      // Nuevo salón
+      await addDoc(salonesRef, salonData);
+      mostrarMensaje("✅ Salón guardado");
+    }
+
+    document.getElementById("formularioSalon").reset();
+    document.getElementById("idSalon").value = "";
+    cargarListaSalones(); // Opcional: recargar
+  } catch (error) {
+    console.error("Error al guardar:", error);
+    mostrarMensaje("❌ Error al guardar el salón");
+  }
+});
+
+// Cargar lista para autocompletar
+window.cargarListaSalones = async function () {
+  const snapshot = await getDocs(salonesRef);
+  const nombres = [];
+
+  snapshot.forEach((doc) => {
+    const datos = doc.data();
+    nombres.push({ id: doc.id, nombre: datos.nombre });
+  });
+
+  // Opcional: usar datalist para autocompletar
+  const datalist = document.getElementById("listaSalones");
+  if (datalist) {
+    datalist.innerHTML = "";
+    nombres.forEach(salon => {
+      const option = document.createElement("option");
+      option.value = salon.nombre;
+      datalist.appendChild(option);
+    });
+  }
+};
+// Cargar datos al seleccionar nombre
+document.getElementById("nombreSalon").addEventListener("change", async () => {
+  const nombreIngresado = document.getElementById("nombreSalon").value.trim();
+  
+  if (nombreIngresado) { // Si el nombre es válido, cargamos los datos
+    const snapshot = await getDocs(salonesRef);
+    let salonEncontrado = false;
+
+    for (const docSnap of snapshot.docs) {
+      const datos = docSnap.data();
+      if (datos.nombre.toLowerCase() === nombreIngresado.toLowerCase()) {
+        document.getElementById("direccionSalon").value = datos.direccion || '';
+        document.getElementById("cpSalon").value = datos.cp || '';
+        document.getElementById("localidadSalon").value = datos.localidad || '';
+        document.getElementById("provinciaSalon").value = datos.provincia || '';
+        document.getElementById("idSalon").value = docSnap.id; // Guardamos ID para editar
+        salonEncontrado = true;
+        break;
+      }
+    }
+
+    if (!salonEncontrado) {
+      // Si no se encuentra el salón, limpia los campos
+      document.getElementById("direccionSalon").value = '';
+      document.getElementById("cpSalon").value = '';
+      document.getElementById("localidadSalon").value = '';
+      document.getElementById("provinciaSalon").value = '';
+      document.getElementById("idSalon").value = ''; // Limpia el ID
+    }
+  }
+});
+
+const modalSalon = document.getElementById('modalAgregarSalon');
+modalSalon.addEventListener('shown.bs.modal', () => {
+  document.getElementById("formularioSalon").reset();
+  document.getElementById("idSalon").value = "";
+});
+
+// Llamar a cargarListaSalones cuando cargue la página
+document.addEventListener("DOMContentLoaded", cargarListaSalones);
+
+//eliminar salon
+document.getElementById("btnEliminarSalon").addEventListener("click", async () => {
+  const id = document.getElementById("idSalon").value;
+
+  if (!id) {
+    mostrarMensaje("⚠️ No se puede eliminar un salón que aún no fue guardado.");
+    return;
+  }
+
+  const result = await Swal.fire({
+    title: '¿Eliminar salón?',
+    text: "Esta acción no se puede deshacer",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#aaa',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    await deleteDoc(doc(db, "salones", id));
+    mostrarMensaje("🗑️ Salón eliminado correctamente");
+    document.getElementById("formularioSalon").reset();
+    document.getElementById("idSalon").value = "";
+    cargarListaSalones();
+
+    const modal = bootstrap.Modal.getInstance(document.getElementById("modalAgregarSalon"));
+    modal.hide();
+  } catch (error) {
+    console.error("Error al eliminar:", error);
+    mostrarMensaje("❌ Error al eliminar el salón");
+  }
+}); 
+//terminar carga salones
+
+
+//modal combos
+window.abrirFlotante = async function(id) {
+  await obtenerNombresCombosDesdeFirestore();
+
+  const datalist = document.getElementById("listaCombos");
+  datalist.innerHTML = listaCombosFirestore.map(c => `<option value="${c.combo}">`).join("");
+
+  document.getElementById(id).style.display = "flex";
+};
+document.getElementById("nombreCombo").addEventListener("change", () => {
+  const nombre = document.getElementById("nombreCombo").value.trim();
+  const comboEncontrado = listaCombosFirestore.find(c => c.combo === nombre);
+
+  const contenedor = document.getElementById("contenedorNuevosCombos");
+  contenedor.innerHTML = "";
+
+  if (comboEncontrado) {
+    comboEncontrado.productos.forEach(producto => {
+      window.agregarFilaCombo({
+        articulo: producto.articulo,
+        unidades: producto.unidades,
+        "caja-pack": producto["caja-pack"]
+      });
+    });
+  }
+});
+
+let listaCombosFirestore = [];
+
+async function obtenerNombresCombosDesdeFirestore() {
+  const snapshot = await getDocs(collection(db, "stock-combos"));
+  listaCombosFirestore = [];
+  snapshot.forEach(doc => {
+    listaCombosFirestore.push({
+      combo: doc.id,
+      productos: doc.data().productos
+    });
+  });
+}
+
+// ✅ Autocompletar con los nombres desde Firestore
+async function cargarNombresCombos() {
+  const lista = document.getElementById('listaCombos');
+  lista.innerHTML = "";
+  const snapshot = await getDocs(collection(db, "stock-combos"));
+  snapshot.forEach(docSnap => {
+    const option = document.createElement("option");
+    option.value = docSnap.id; // usaremos el ID como nombre
+    lista.appendChild(option);
+  });
+}
+
+// ✅ Si el nombre coincide con uno existente, cargar artículos
+document.getElementById('nombreCombo').addEventListener('change', async (e) => {
+  const nombre = e.target.value.trim();
+  if (!nombre) return;
+
+  const docRef = doc(db, "stock-combos", nombre);
+  const docSnap = await getDoc(docRef);
+
+  const contenedor = document.getElementById("contenedorNuevosCombos");
+  contenedor.innerHTML = "";
+
+  if (docSnap.exists()) {
+    const datos = docSnap.data();
+    datos.productos.forEach(prod => {
+      window.agregarFilaCombo({
+        articulo: prod.articulo,
+        unidades: prod.unidades,
+        "caja-pack": prod.cajaPack
+      });
+    });
+  }
+});
+
+
+// ✅ Guardar combo (crear o sobrescribir)
+async function guardarComboEnFirestore(nombre, productos) {
+  await setDoc(doc(db, "stock-combos", nombre), { productos });
+}
+
+// ✅ Eliminar combo por nombre
+async function eliminarComboDeFirestore(nombreCombo) {
+  await deleteDoc(doc(db, "stock-combos", nombreCombo));
+}
+
+window.guardarTodoCombo = async function() {
+  const nombre = document.getElementById("nombreCombo").value.trim();
+  if (!nombre) {
+    alert("Ingresá un nombre para el combo.");
+    return;
+  }
+
+  const filas = document.querySelectorAll("#contenedorNuevosCombos .fila-combo");
+  const productos = [];
+
+  filas.forEach(fila => {
+    const articulo = fila.querySelector(".input-articulo")?.value.trim();
+    const unidades = parseInt(fila.querySelector(".input-unidades")?.value);
+    const cajaPack = parseInt(fila.querySelector(".input-caja-pack")?.value);
+    
+    if (articulo) {
+      productos.push({
+        articulo,
+        unidades: isNaN(unidades) ? 0 : unidades,
+        cajaPack: isNaN(cajaPack) ? 0 : cajaPack,
+        
+      });
+    }
+  });
+
+  try {
+    await eliminarComboDeFirestore(nombre); // elimina combo viejo si existe
+    await guardarComboEnFirestore(nombre, productos); // guarda nuevo
+    mostrarMensajeGuardado();
+    cerrarFlotante("modalEditarCombos");
+  } catch (error) {
+    console.error("Error al guardar el combo:", error);
+    alert("Hubo un error al guardar el combo.");
+  }
+};
+
+let listaArticulosFirestore = [];
+async function obtenerArticulosDesdeFirestore() {
+  const snapshot = await getDocs(collection(db, "stock-articulos"));
+  const articulos = [];
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    articulos.push({
+      nombre: data.articulo,
+      unidades: data.unidades,
+      cajaPack: data["caja-pack"]
+    });
+  });
+  return articulos;
+}
+
+window.agregarFilaCombo = async function(data = {}) {
+  if (listaArticulosFirestore.length === 0) {
+    listaArticulosFirestore = await obtenerArticulosDesdeFirestore();
+  }
+
+  const contenedor = document.getElementById("contenedorNuevosCombos");
+
+  const fila = document.createElement("div");
+  fila.classList.add("fila-combo", "d-flex", "gap-2", "mb-2");
+
+  const datalistId = "lista-articulos-" + Math.random().toString(36).substring(7);
+
+  fila.innerHTML = `
+    <input type="text" class="form-control input-articulo" list="${datalistId}" placeholder="Artículo" value="${data.articulo || ""}">
+    <datalist id="${datalistId}">
+      ${listaArticulosFirestore.map(a => `<option value="${a.nombre}">`).join("")}
+    </datalist>
+    <input type="number" class="form-control input-unidades" placeholder="Unidades" value="${data.unidades || ""}">
+    <input type="number" class="form-control input-caja-pack" placeholder="Caja/Pack" value="${data["caja-pack"] || ""}">
+    <button class="btn btn-danger" onclick="this.parentElement.remove()">🗑</button>
+  `;
+
+  const inputArticulo = fila.querySelector(".input-articulo");
+  const inputUnidades = fila.querySelector(".input-unidades");
+  const inputCajaPack = fila.querySelector(".input-caja-pack");
+
+  inputArticulo.addEventListener("change", () => {
+    const articuloSeleccionado = listaArticulosFirestore.find(a => a.nombre === inputArticulo.value);
+    if (articuloSeleccionado) {
+      inputUnidades.value = articuloSeleccionado.unidades || "";
+      inputCajaPack.value = articuloSeleccionado.cajaPack || "";
+    }
+  });
+
+  contenedor.appendChild(fila);
+};
+window.cerrarFlotante = function(id) {
+  document.getElementById(id).style.display = "none";
+  document.getElementById("nombreCombo").value = ""; // Limpiar nombre del combo
+  document.getElementById("contenedorNuevosCombos").innerHTML = ""; // Limpiar artículos
+};
+window.eliminarComboConConfirmacion = async function() {
+  const nombre = document.getElementById("nombreCombo").value.trim();
+  if (!nombre) {
+    alert("Seleccioná un combo para eliminar.");
+    return;
+  }
+
+  const result = await Swal.fire({
+    title: '¿Eliminar combo?',
+    text: "Esta acción no se puede deshacer",
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#aaa',
+    confirmButtonText: 'Sí, eliminar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (result.isConfirmed) {
+  try {
+    await eliminarComboDeFirestore(nombre);
+    await obtenerNombresCombosDesdeFirestore(); // 🔄 refrescar lista
+
+    mostrarMensajeGuardado("Combo eliminado correctamente.");
+    cerrarFlotante("modalEditarCombos");
+  } catch (error) {
+    console.error("Error al eliminar combo:", error);
+    alert("Error al eliminar el combo.");
+  }
+}
+
+};
+
+//finaliza modal combos
+
+// Expone funciones al scope global
+window.cargarSalones = cargarSalones;
+window.cargarStockActual = cargarStockActual;
+window.actualizarStock = actualizarStock;
+
+
+  </script>
+  
+<script>
+  function abrirModal(id) {
+  document.getElementById(id).style.display = 'flex';
+}
+
+function cerrarModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+ /* function mostrarFlotante() {
+      const contenedor = document.getElementById("contenedorCombos");
+      contenedor.innerHTML = "";
+
+      Object.entries(combos).forEach(([nombre, productos]) => {
+        const card = document.createElement("div");
+        card.className = "combo-card";
+
+        const encabezado = document.createElement("h6");
+        encabezado.innerHTML = `<input type="checkbox" class="combo-checkbox" data-nombre="${nombre}"> ${nombre}`;
+        card.appendChild(encabezado);
+
+        productos.forEach((p) => {
+          const row = document.createElement("div");
+          row.className = "row mb-2";
+          row.innerHTML = `
+            <div class="col-md-4">
+              <input class="form-control articulo" value="${p.articulo}" />
+            </div>
+            <div class="col">
+              <input class="form-control unidades" type="number" value="${p.unidades}" />
+            </div>
+            <div class="col">
+              <input class="form-control cajas" type="number" value="${p.cajas}" />
+            </div>
+            <div class="col">
+              <input class="form-control pack" type="number" value="${p.pack}" />
+            </div>
+          `;
+          card.appendChild(row);
+        });
+
+        contenedor.appendChild(card);
+      });
+
+      document.getElementById("pantallaFlotante").style.display = "flex";
+    }
+
+    function abrirFlotante(id) {
+  document.getElementById(id).style.display = "flex";
+}
+ */
+function cerrarFlotante(id) {
+  document.getElementById(id).style.display = "none";
+}
+let contadorCombos = 0;
+
+function agregarFilaCombo() {
+  const contenedor = document.getElementById("contenedorNuevosCombos");
+
+  const div = document.createElement("div");
+  div.className = "d-flex align-items-center mb-2 gap-2";
+
+  div.innerHTML = `
+    <input type="text" class="form-control w-50" placeholder="Artículo">
+    <input type="number" class="form-control w-25" placeholder="Cantidad">
+    <input type="number" class="form-control w-25" placeholder="Caja/Pack">
+    <button class="btn btn-danger btn-sm" onclick="eliminarCombo(this)">Eliminar</button>
+  `;
+
+  contenedor.appendChild(div);
+  contadorCombos++;
+}
+
+function eliminarCombo(boton) {
+  const fila = boton.parentElement;
+  fila.remove();
+}
+
+/* function guardarTodoCombo() {
+  const nombreCombo = document.getElementById("nombreCombo").value.trim();
+  const filas = document.querySelectorAll("#contenedorNuevosCombos > div");
+
+  if (!nombreCombo) {
+    alert("Por favor ingresá un nombre para el combo.");
+    return;
+  }
+
+  if (filas.length === 0) {
+    alert("Agregá al menos un artículo al combo.");
+    return;
+  }
+
+  const articulos = [];
+  filas.forEach(fila => {
+    const inputs = fila.querySelectorAll("input");
+    const articulo = inputs[0].value.trim();
+    const cantidad = parseInt(inputs[1].value);
+
+    if (articulo && !isNaN(cantidad)) {
+      articulos.push({ articulo, cantidad });
+    }
+  });
+
+  if (articulos.length === 0) {
+    alert("Los campos están vacíos o incompletos.");
+    return;
+  }
+
+  // Aquí podrías guardar en Firestore o localStorage
+  console.log("Combo guardado:", {
+    nombre: nombreCombo,
+    items: articulos
+  });
+
+  alert(`Combo "${nombreCombo}" guardado con ${articulos.length} artículos.`);
+  cerrarFlotante("modalEditarCombos");
+} */
+
+/* function agregarCombo2() {  
+  const contenedor = document.getElementById("contenedorNuevosArticulos");
+  const div = document.createElement("div");
+  div.className = "d-flex align-items-center mb-2 gap-2";
+  div.innerHTML = `
+    <input type="text" class="form-control w-50" placeholder="Nombre del combo" id="combo-${contadorCombos}">
+    <input type="number" class="form-control w-25" placeholder="Caja/Pack" id="combo-${contadorCombos}">
+    <button class="btn btn-primary btn-sm" onclick="guardarCombo2(${contadorCombos})">Guardar</button>
+    <button class="btn btn-danger btn-sm" onclick="eliminarCombo(this)">Eliminar</button>
+  `;
+  contenedor.appendChild(div);
+  contadorCombos++;
+} */
+
+function guardarCombo2(id) {  
+  const input = document.getElementById(`combo-${id}`);
+  const valor = input.value.trim();
+  if (valor) {
+    alert(`Combo "${valor}" guardado.`);
+    input.disabled = true;
+  } else {
+    alert("Por favor ingresá un nombre para el combo.");
+  }
+}
+document.addEventListener("DOMContentLoaded", async () => {
+  await cargarSalones(); // cargar opciones del datalist
+
+  const selector = document.getElementById("selectorSalon");
+  const salonGuardado = localStorage.getItem("salonSeleccionado");
+
+  if (selector && salonGuardado) {
+    selector.value = salonGuardado;
+    await cargarStockActual(); // cargar tabla de stock al inicio
+  }
+
+  selector?.addEventListener("change", async () => {
+    const nuevoSalon = selector.value;
+    localStorage.setItem("salonSeleccionado", nuevoSalon);
+    await cargarStockActual(); // recargar tabla cuando cambia el salón
+  });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const salonGuardado = localStorage.getItem("salonSeleccionado");
+  if (salonGuardado) {
+    document.getElementById("selectorSalon").value = salonGuardado;
+  }
+});
+
+function guardarSalonSeleccionado() {
+    const salon = document.getElementById("selectorSalon").value;
+    localStorage.setItem("salonSeleccionado", salon);
+  }
+   document.addEventListener("DOMContentLoaded", guardarSalonSeleccionado);
+  let columnaActual = null;
+  document.addEventListener("DOMContentLoaded", () => {
+  const ths = document.querySelectorAll("#tablaStock th");
+  ths.forEach((th, index) => {
+  th.addEventListener("click", (event) => mostrarFiltro(event, index));
+  });
+  document.addEventListener("click", (e) => {
+    const dropdown = document.getElementById("filtroDropdown");
+    if (!dropdown.contains(e.target) && !e.target.closest("th")) {
+      dropdown.style.display = "none";
+    }
+  });
+});
+
+function mostrarFiltro(event, columna) {
+  const filtro = document.getElementById("filtroDropdown");
+  const opcionesDiv = document.getElementById("opcionesFiltro");
+  const filas = document.querySelectorAll("#tablaStockActual tr");
+  const valoresUnicos = new Set();
+
+  columnaActual = columna;
+
+  filas.forEach(fila => {
+    const celda = fila.cells[columna];
+    if (celda) valoresUnicos.add(celda.textContent.trim());
+  });
+
+  // Construir checkboxes
+  opcionesDiv.innerHTML = `
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="seleccionarTodos" onchange="seleccionarTodosCheckboxes(this)">
+      <label class="form-check-label fw-bold" for="seleccionarTodos">Seleccionar todos</label>
+    </div>
+  `;
+
+  valoresUnicos.forEach(valor => {
+    opcionesDiv.innerHTML += `
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" value="${valor}" id="filtro-${valor}">
+        <label class="form-check-label" for="filtro-${valor}">${valor}</label>
+      </div>`;
+  });
+
+  // Posicionamiento
+  filtro.style.display = "block";
+  filtro.style.top = `${event.clientY}px`;
+  filtro.style.left = `${event.clientX}px`;
+
+  document.getElementById("filtroInput").value = "";
+  filtrarOpciones(); // Aplicar el filtro de texto
+}
+
+function filtrarOpciones() {
+  const filtroTexto = document.getElementById("filtroInput").value.toLowerCase();
+  const checks = document.querySelectorAll("#opcionesFiltro .form-check");
+  checks.forEach(check => {
+    const label = check.textContent.toLowerCase();
+    check.style.display = label.includes(filtroTexto) ? "block" : "none";
+  });
+}
+
+function aplicarFiltro() {
+  const seleccionados = Array.from(document.querySelectorAll("#opcionesFiltro input[type='checkbox']:checked"))
+    .filter(cb => cb.id !== "seleccionarTodos")
+    .map(input => input.value);
+
+  const filas = document.querySelectorAll("#tablaStockActual tr");
+
+  filas.forEach(fila => {
+    const celda = fila.cells[columnaActual];
+    if (!celda || seleccionados.length === 0) {
+      fila.style.display = "";
+    } else {
+      const valor = celda.textContent.trim();
+      fila.style.display = seleccionados.includes(valor) ? "" : "none";
+    }
+  });
+
+  document.getElementById("filtroDropdown").style.display = "none";
+}
+
+function limpiarFiltro() {
+  const filas = document.querySelectorAll("#tablaStockActual tr");
+  filas.forEach(tr => tr.style.display = "");
+  document.getElementById("filtroDropdown").style.display = "none";
+  columnaActual = null;
+}
+
+function seleccionarTodosCheckboxes(source) {
+  const checkboxes = document.querySelectorAll("#opcionesFiltro input[type='checkbox']");
+  checkboxes.forEach(cb => {
+    if (cb !== source) cb.checked = source.checked;
+  });
+}
+
+setTimeout(() => {
+  const filtro = document.getElementById("filtroDropdown");
+  const rect = filtro.getBoundingClientRect();
+
+  if (rect.right > window.innerWidth) {
+    filtro.style.left = `${window.innerWidth - rect.width - 20}px`;
+  }
+  if (rect.bottom > window.innerHeight) {
+    filtro.style.top = `${window.innerHeight - rect.height - 20}px`;
+  }
+}, 0);  //fin de la tabla tipo excel
+
+//mostrar mensajes
+function mostrarMensaje(texto, tipo = "success") {
+  let contenedor = document.getElementById("mensajeFlotante");
+  if (!contenedor) {
+    contenedor = document.createElement("div");
+    contenedor.id = "mensajeFlotante";
+    contenedor.style.position = "fixed";
+    contenedor.style.bottom = "20px";
+    contenedor.style.right = "20px";
+    contenedor.style.zIndex = "3000";
+    document.body.appendChild(contenedor);
+  }
+  const alerta = document.createElement("div");
+  alerta.className = `alert alert-${tipo}`;
+  alerta.textContent = texto;
+  alerta.style.borderRadius = "1rem";
+  alerta.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+  alerta.style.padding = "12px 20px";
+  alerta.style.marginBottom = "10px";
+  alerta.style.opacity = "0";
+  alerta.style.transition = "opacity 0.5s ease-in-out";
+
+  contenedor.appendChild(alerta);
+  
+  setTimeout(() => {
+    alerta.style.opacity = "1";
+  }, 10);
+
+  setTimeout(() => {
+    alerta.style.opacity = "0";
+    setTimeout(() => alerta.remove(), 500);
+  }, 3000);
+}
+
+function mostrarMensajeGuardado(texto = "Guardado correctamente.") {
+  const mensaje = document.getElementById("mensajeGuardado");
+  mensaje.textContent = texto;
+  mensaje.style.display = "block";
+  mensaje.style.opacity = 1;
+
+  setTimeout(() => {
+    mensaje.style.opacity = 0;
+    setTimeout(() => {
+      mensaje.style.display = "none";
+    }, 300);
+  }, 2000);
+}
+
+
+  </script>
+<!-- Footer al final -->
+<footer class="bg-dark text-white text-center py-2 mt-auto">
+  <small>© 2025 Janos Logística. desarrollador Jose Quin.</small>
+</footer>
+
+
+</body>
+</html>

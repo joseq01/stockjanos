@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pedidos de Artículos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .nav-link:hover { color: #ffc107 !important; }
+    .navbar { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    #logo { max-height: 50px; }
+    #pantallaFlotante {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    #pantallaFlotante .contenido {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .combo-card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .combo-card h6 {
+      margin-bottom: 0.5rem;
+    }
+
+    .swal2-container {
+     z-index: 9999 !important;
+   }
+   
+   body {
+  padding-top: 70px; /* Ajustá este valor si tu navbar es más alto o más bajo */
+}
+
+  </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+  <!-- Navegación -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+
+    <div class="container-fluid d-flex justify-content-between align-items-center px-4">
+      <div class="d-flex align-items-center">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+          <img id="logo" src="../image/Logos-Janos.png" alt="logojanos" />
+          <span class="ms-3 text-white small">Logística - Pedidos</span>
+        </a>
+        <div class="collapse navbar-collapse show ms-4">
+          <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="../index.html.html">Stock</a></li>
+            <li class="nav-item"><a class="nav-link" href="../paginas/logiticaingreso.html">Ingresos</a></li>
+          </ul>
+        </div>
+      </div>
+      <button id="btnImprimir" class="btn btn-success btn-sm me-2 d-none" onclick="imprimirSeleccion()">Imprimir</button>
+    </div>
+  </nav>
+
+  <!-- Formulario -->
+    
+  <div class="container mt-5">
+    <h6 class="mt-4">Pedidos:</h6>
+    <!-- <h5 class="text-center">Agregar Artículos</h5> -->
+    <div class="card p-3">
+      <div class="row align-items-end">
+        <div class="col-md-4">
+          <label for="articulo" class="form-label">Artículo:</label>
+          <input type="text" id="articulo" class="form-control" list="listaSugerencias" placeholder="Nombre del artículo" />
+          <datalist id="listaSugerencias"></datalist>
+        </div>
+        <div class="col-auto">
+          <label for="unidades" class="form-label">Uni.</label>
+          <input type="number" id="unidades" class="form-control" style="width: 80px;" />
+        </div>
+        <div class="col-auto">
+          <label for="cajas" class="form-label">Caj./Pack</label>
+          <input type="number" id="cajas" class="form-control" style="width: 80px;" />
+        </div>
+        <div class="col-auto">
+          <label for="salonDestino" class="form-label">Salón Destino</label>
+          <input type="text" id="salonDestino" class="form-control" style="width: 120px;" />
+        </div>
+        <div class="col-auto">
+          <label for="pack" class="form-label"></label>
+          <input type="text" id="notas" class="form-control" placeholder="Observaciones..." style="width: 450px;" />
+        </div>
+        <div class="col-auto align-self-end">
+          <button class="btn btn-sm btn-primary" onclick="agregarArticulo()">Agregar</button>
+          <button class="btn btn-sm btn-warning" onclick="mostrarFlotante()">Agregar Combos</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- <h5 class="mt-4">Pedidos:</h5> -->
+    <table class="table table-striped mt-2"  >
+        <colgroup>
+            <col style="width: 30px;">   <!-- Checkbox -->
+            <col style="width: 100px;">  <!-- Salón Destino -->
+            <col style="width: 30px;">  <!-- Fecha -->
+            <col style="width: 300px;">  <!-- Artículo -->
+            <col style="width: 30px;">   <!-- Unidades -->
+            <col style="width: 30px;">   <!-- Cajas -->
+            <col style="width: 100px;">   <!-- Pack / observaciones -->
+            <col style="width: 60px;">   <!-- Acción -->
+            <col style="width: 120px;">  <!-- Usuario -->
+          </colgroup>
+      <thead>
+        <tr >
+          <th></th>
+          <th>Salón Destino</th>
+          <th>Fecha</th>
+          <th>Artículo</th>
+          <th>Unidades</th>
+          <th>Caja/Pack</th>
+          <th>Notas</th>
+          <th>Acción</th>
+          <th>Usuario</th>
+         
+        </tr>
+      </thead>
+      <tbody id="tablaArticulos"></tbody>
+    </table>
+  </div>
+
+  <div id="filtroDropdown" class="card p-2 position-absolute shadow" style="display: none; z-index: 1000; width: 200px;">
+    <input type="text" id="filtroInput" class="form-control mb-2" placeholder="Buscar...">
+    <div id="opcionesFiltro" class="mb-2" style="max-height: 200px; overflow-y: auto;"></div>
+    
+    <button class="btn btn-primary btn-sm mt-2 w-100" onclick="aplicarFiltro()">Aplicar</button>
+  </div>
+  
+  <!-- Pantalla flotante -->
+<div id="pantallaFlotante" style="display: none;"> <!-- AGREGADO style="display: none;" -->
+  <div class="contenido position-relative">
+    <button class="btn-close position-absolute top-0 end-0 m-3" onclick="cerrarFlotante()"></button>
+
+    <div class="row fw-bold px-3 mb-2">
+      <div class="col-md-4">Ambientación</div>
+      <div class="col">Unidades</div>
+      <div class="col">Caj./Pack</div>
+      <div class="col">Notas</div>
+    </div>
+
+    <div id="contenedorCombos"></div>
+
+    <div class="d-flex justify-content-end gap-2 mt-3">
+      <button class="btn btn-secondary" onclick="cerrarFlotante()">Cerrar</button>
+      <button class="btn btn-primary" onclick="guardarSeleccion()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="mensajeGuardado" style="
+  display: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: opacity 0.3s ease;
+  z-index: 9999;
+">
+  Guardado correctamente.
+</div>
+
+  <!-- Modal para datos del chofer -->
+<div class="modal fade" id="modalDatosChofer" tabindex="-1" aria-labelledby="modalDatosChoferLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalDatosChoferLabel">Datos del chofer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="nombreChofer" required />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">DNI</label>
+            <input type="text" class="form-control" id="dniChofer" required />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Marca</label>
+            <input type="text" class="form-control" id="marcaVehiculo" required />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Modelo</label>
+            <input type="text" class="form-control" id="modeloVehiculo" required />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Patente</label>
+            <input type="text" class="form-control" id="patenteVehiculo" required />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Copias (opcional)</label>
+            <input type="number" class="form-control" id="cantidadCopias" value="2" min="1" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary" onclick="confirmarImpresion()">Confirmar e Imprimir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="mensaje-eliminado" style="
+  display: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: opacity 0.3s ease;
+  z-index: 9999;
+">
+  Artículo eliminado correctamente
+</div>
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  getDocs,
+  getDoc,
+  updateDoc,
+  query,
+  where,
+  addDoc,
+  setDoc,
+  orderBy,
+  Timestamp,
+  deleteDoc,
+  doc,
+  increment
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// ✅ Configuración Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBS2yswfrDzyOzlP2aJRkws8x8930DvYY",
+  authDomain: "stock-janos.firebaseapp.com",
+  projectId: "stock-janos",
+  storageBucket: "stock-janos.appspot.com",
+  messagingSenderId: "656905318444",
+  appId: "1:656905318444:web:90fd9780bb9f3c424ba189",
+  measurementId: "G-DGXEE6YHFX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+window.db = db;
+
+let combos = {};
+
+// ✅ Función: cargar combos desde Firestore
+async function cargarCombosDesdeFirestore() {
+  const combosRef = collection(db, "stock-combos");
+  const snapshot = await getDocs(combosRef);
+  combos = {}; // objeto global
+
+  snapshot.forEach((doc) => {
+    const nombreCombo = doc.id;
+    const data = doc.data();
+
+    if (Array.isArray(data.productos)) {
+      combos[nombreCombo] = data.productos.map(item => ({
+      articulo: item.articulo || "",
+      unidades: item.unidades ?? 0,
+      "caja-pack": item.cajaPack ?? 0,
+      nota: item.nota || ""  // revisar cajas
+    }));
+
+    } else {
+      combos[nombreCombo] = [];
+    }
+  });
+} //2 clicks menos 20/5
+
+function mostrarFlotante() {
+  const contenedor = document.getElementById("contenedorCombos");
+if (!contenedor) {
+  console.error("No se encontró el contenedor de combos.");
+  return;
+}
+
+  contenedor.innerHTML = "";
+
+  Object.entries(combos).forEach(([nombre, productos]) => {
+    const card = document.createElement("div");
+    card.className = "combo-card";
+
+    const encabezado = document.createElement("h6");
+    encabezado.innerHTML = `<input type="checkbox" class="combo-checkbox" data-nombre="${nombre}"> ${nombre}`;
+    card.appendChild(encabezado);
+
+    productos.forEach((p) => {
+      const row = document.createElement("div");
+      row.className = "row mb-2";
+      row.innerHTML = `
+        <div class="col-md-4">
+          <input class="form-control articulo" value="${p.articulo}" />
+        </div>
+        <div class="col">
+          <input class="form-control unidades" type="number" value="${p.unidades}" />
+        </div>
+        <div class="col">
+          <input class="form-control cajas" type="number" value="${p['caja-pack']}" />
+        </div>
+        <div class="col">
+          <input class="form-control notas" placeholder="Notas..." value="${p.nota}" />
+        </div>
+      `;
+      card.appendChild(row);
+    });
+
+    contenedor.appendChild(card);
+  });
+
+  document.getElementById("pantallaFlotante").style.display = "flex";
+}
+
+function cerrarFlotante() {
+  document.getElementById("pantallaFlotante").style.display = "none";
+}
+
+// ✅ Crear fila HTML
+function crearFila(articulo, unidades, cajas, notas, destino, fecha, usuario, docId = "") {
+  return `
+   <tr data-id="${docId}" onclick="toggleSeleccion(this)">
+      <td><input type="checkbox" onchange="toggleSeleccion(this.parentElement.parentElement, true)"></td>
+      <td contenteditable="true">${destino}</td>
+      <td contenteditable="true">${fecha}</td>
+      <td contenteditable="true">${articulo}</td>
+      <td contenteditable="true">${unidades}</td>
+      <td contenteditable="true">${cajas}</td>
+      <td contenteditable="true">${notas}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="eliminarFila(this, event)">✕</button></td>
+      <td contenteditable="true">${usuario}</td>
+    </tr>
+  `;
+}
+
+async function obtenerStockDisponible() {
+  const snapshot = await getDocs(collection(db, "stock-ingreso"));
+  const stock = {};
+
+  snapshot.forEach(doc => {
+    const data = doc.data();
+    const articulo = data.articulo;
+    const unidades = parseInt(data.unidades) || 0;
+   //no falta cajas?
+    if (!stock[articulo]) {
+      stock[articulo] = 0;
+    }
+    stock[articulo] += unidades;
+  });
+
+  return stock;
+}
+
+ //agregado 4-5
+ async function obtenerStockTotal() {
+  const snapshot = await getDocs(collection(db, "stock-total"));
+  const stock = {};
+
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+
+    stock[doc.id] = {
+      unidades: data.unidades || 0,
+      "caja-pack": data["caja-pack"] || 0, //no es cajas?
+      salones: data.salones || {}  // ✅ incluir stock por salón
+    };
+  });
+
+  return stock;
+}
+
+async function existeArticulo(nombreArticulo) { //buscamos el articulo para comparar con el id
+  const q = query(collection(db, "stock-articulos"), where("articulo", "==", nombreArticulo));
+  const querySnapshot = await getDocs(q);
+  return !querySnapshot.empty;
+}
+
+// ✅ modificacion 17-5
+async function agregarArticulo() {
+  const articulo = document.getElementById("articulo").value.trim();
+  const unidades = parseInt(document.getElementById("unidades").value) || 0;
+  const cajas = parseInt(document.getElementById("cajas").value) || 0;
+  const notas = document.getElementById("notas").value.trim();
+  const destino = document.getElementById("salonDestino").value;
+  const origen = localStorage.getItem("salonSeleccionado") || "";
+  const fecha = new Date().toLocaleDateString();
+  const usuario = "UsuarioDemo";
+
+  if (articulo === "" || destino.trim() === "") {
+    if (destino.trim() === "") {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Destino requerido',
+        text: 'Debes seleccionar un salón de destino antes de agregar el artículo.',
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#3085d6'
+      });
+    }
+    return;
+  }
+
+  // 🔍 Verificar si existe en stock-articulos
+  const existeEnStock = await existeArticulo(articulo);
+
+  if (existeEnStock) {
+    const stockDisponible = await obtenerStockTotal();
+    const stockSalones = stockDisponible[articulo]?.salones ?? {};
+    const stockEnSalonUnidades = stockSalones[origen]?.unidades ?? 0;
+    const stockEnSalonCajas = stockSalones[origen]?.caja ?? 0; //no es cajas?
+
+    if (unidades > stockEnSalonUnidades || cajas > stockEnSalonCajas) {
+      await Swal.fire({
+        icon: 'info',
+        title: 'Stock insuficiente',
+        text: `articulo "${articulo}"  unidades disponibles: ${stockEnSalonUnidades}.
+        Cajas disponibles: ${stockEnSalonCajas}.`,
+        confirmButtonText: 'Entendido',
+        confirmButtonColor: '#3085d6'
+      });
+      return;
+    }
+
+    // 🟡 Descontar stock del salón de origen
+    await descontarStock(articulo, unidades, cajas, origen);
+  }
+
+  // ✅ Registrar el pedido (siempre, exista o no el artículo)
+  await addDoc(collection(db, "stock-pedidos"), {
+    articulo,
+    unidades,
+    "caja-pack": cajas,
+    notas,
+    salones: destino,
+    origen,
+    usuario,
+    fecha
+  });
+
+  // ✅ Si todo está bien, recargar tabla y limpiar formulario
+  await cargarTablaPedidos();
+
+  document.getElementById("articulo").value = "";
+  document.getElementById("unidades").value = "";
+  document.getElementById("cajas").value = "";
+  document.getElementById("notas").value = "";
+
+  Swal.fire({
+    toast: true,
+  position: 'top-end',
+  icon: 'success',
+  title: 'Agregado',
+  showConfirmButton: false,
+  timer: 1000,
+  timerProgressBar: true,
+  customClass: {
+    popup: 'swal2-sm'
+  }
+  });
+}
+
+
+async function cargarTablaPedidos() {
+  const tabla = document.getElementById("tablaArticulos");
+  tabla.innerHTML = "";
+
+  const salonSeleccionado = localStorage.getItem("salonSeleccionado");
+  if (!salonSeleccionado) {
+    console.warn("No hay salón seleccionado");
+    return;
+  }
+
+  const pedidosRef = collection(db, "stock-pedidos");
+
+  const q = query(
+    pedidosRef,
+    where("origen", "==", salonSeleccionado), // 🟡 ACÁ DEBERÍA SER "origen"
+    orderBy("fecha")
+  );
+
+  const snapshot = await getDocs(q);
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const fecha = data.fecha instanceof Timestamp
+      ? data.fecha.toDate().toLocaleDateString()
+      : data.fecha;
+
+    const fila = crearFila(
+      data.articulo,
+      data.unidades,
+      data["caja-pack"], //no es cajas?
+      data.notas,
+      data.salones,
+      fecha,
+      data.usuario,
+      docSnap.id 
+    );
+
+    tabla.insertAdjacentHTML("beforeend", fila);
+  });
+}
+
+function eliminarFilaSinId(fila) {
+  fila.remove();
+  mostrarMensajeEliminado();
+}
+
+async function obtenerDatosPedido(docId) {
+  const docRef = doc(db, "stock-pedidos", docId);
+  const docSnap = await getDoc(docRef);
+  return docSnap.exists() ? docSnap.data() : null;
+}
+
+async function restaurarStockTotal(articulo, unidades, cajas, salon) {
+  const existe = await existeArticuloEnStockArticulos(articulo);
+  if (!existe) {
+    console.warn(`⚠️ El artículo "${articulo}" no existe en stock-articulos. No se restaura stock-total.`);
+    return;
+  }
+
+  const totalRef = doc(db, "stock-total", articulo);
+  const totalSnap = await getDoc(totalRef);
+
+  if (totalSnap.exists()) {
+    const totalData = totalSnap.data();
+    let nuevasUnidadesSalon = 0;
+    let nuevasCajasSalon = 0;
+
+    if (totalData.salones && totalData.salones[salon]) {
+      nuevasUnidadesSalon = (totalData.salones[salon].unidades || 0) + unidades;
+      nuevasCajasSalon = (totalData.salones[salon]["caja-pack"] || 0) + cajas;
+    } else {
+      nuevasUnidadesSalon = unidades;
+      nuevasCajasSalon = cajas;
+    }
+
+    await updateDoc(totalRef, {
+      unidades: (totalData.unidades || 0) + unidades,
+      "caja-pack": (totalData["caja-pack"] || 0) + cajas,
+      [`salones.${salon}.unidades`]: nuevasUnidadesSalon,
+      [`salones.${salon}.caja-pack`]: nuevasCajasSalon
+    });
+  } else {
+    // ⚠️ Ya no se crea un documento si no existe
+    console.warn(`⚠️ No se encontró "${articulo}" en stock-total y no se crea porque no debería.`);
+  }
+}
+
+async function existeArticuloEnStockArticulos(articulo) {
+  const docRef = doc(db, "stock-articulos", articulo);
+  const docSnap = await getDoc(docRef);
+  return docSnap.exists();
+}
+
+
+async function descontarStock(articulo, unidades, cajas, origen) {
+  const docRef = doc(db, "stock-total", articulo);
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) return;
+
+  const data = docSnap.data();
+  const stockSalones = data.salones || {};
+
+  const stockEnSalon = stockSalones[origen] || { unidades: 0, caja: 0 };
+
+  const nuevasUnidades = (stockEnSalon.unidades || 0) - unidades;
+  const nuevasCajas = (stockEnSalon.caja || 0) - cajas;
+
+  stockSalones[origen] = {
+    unidades: Math.max(nuevasUnidades, 0),
+    caja: Math.max(nuevasCajas, 0)
+  };
+
+  await updateDoc(docRef, { salones: stockSalones });
+}
+
+
+// ✅ Eliminar fila
+async function eliminarFila(btn, event) {
+  event.stopPropagation();
+  const fila = btn.closest("tr");
+  const docId = fila.getAttribute("data-id");
+
+  if (!docId) {
+    eliminarFilaSinId(fila);
+    return;
+  }
+
+  try {
+    const data = await obtenerDatosPedido(docId);
+    if (data) {
+      const { articulo, unidades, "caja-pack": cajas, origen } = data;
+await restaurarStockTotal(articulo, parseInt(unidades) || 0, parseInt(cajas) || 0, origen);
+
+    }
+    await eliminarPedido(docId, fila);
+  } catch (error) {
+    console.error("Error eliminando documento:", error);
+  }
+}
+
+async function eliminarPedido(docId, fila) {
+  try {
+    await deleteDoc(doc(db, "stock-pedidos", docId));
+    fila.remove();
+    mostrarMensajeEliminado();
+  } catch (error) {
+    console.error("Error al eliminar el pedido:", error);
+  }
+}
+
+// ✅ Guardar combos seleccionados
+async function guardarSeleccion() {
+  const contenedor = document.getElementById("contenedorCombos");
+  if (!contenedor) {
+    console.error("No se encontró el contenedor de combos.");
+    return;
+  }
+
+  const comboCards = contenedor.querySelectorAll(".combo-card");
+  if (comboCards.length === 0) {
+    console.warn("No hay combos cargados para guardar.");
+    return;
+  }
+
+  const fecha = new Date().toLocaleDateString();
+  const usuario = "UsuarioDemo";
+  const destino = document.getElementById("salonDestino").value;
+  const origen = localStorage.getItem("salonSeleccionado") || "";
+
+  const stockDisponible = await obtenerStockTotal();
+
+  for (let card of comboCards) {
+    const comboNombre = card.querySelector(".combo-checkbox").dataset.nombre;
+    const rows = card.getElementsByClassName("row");
+
+    for (let row of rows) {
+      const articuloInput = row.querySelector(".articulo");
+      const unidadesInput = row.querySelector(".unidades");
+      const cajasInput = row.querySelector(".cajas");
+      const notasInput = row.querySelector(".notas");
+
+      if (articuloInput && unidadesInput && cajasInput && notasInput) {
+        const articulo = articuloInput.value.trim();
+        const unidades = parseInt(unidadesInput.value) || 0;
+        const cajas = parseInt(cajasInput.value) || 0;
+        const notas = notasInput.value.trim();
+
+        if (!articulo || (unidades <= 0 && cajas <= 0)) continue;
+
+        // 🔍 Verificar si el artículo existe en 'stock-articulos'
+        const existe = await existeArticulo(articulo);
+
+        if (existe) {
+          const stockSalones = stockDisponible[articulo]?.salones ?? {};
+          const stockEnSalonUnidades = stockSalones[origen]?.unidades ?? 0;
+          const stockEnSalonCajas = stockSalones[origen]?.caja ?? 0;
+
+          if (unidades > stockEnSalonUnidades || cajas > stockEnSalonCajas) {
+            await Swal.fire({
+              icon: 'info',
+              title: 'Stock insuficiente',
+              html: `
+                <strong>${articulo}</strong> en salón <strong>${origen}</strong><br><br>
+                <u>Unidades</u>: Pedido ${unidades}, disponibles ${stockEnSalonUnidades}<br>
+                <u>Cajas</u>: Pedido ${cajas}, disponibles ${stockEnSalonCajas}
+              `,
+              confirmButtonText: 'Entendido',
+              confirmButtonColor: '#3085d6'
+            });
+            continue;
+          }
+
+          // ✅ Registrar el pedido
+          await addDoc(collection(db, "stock-pedidos"), {
+            articulo,
+            unidades,
+            "caja-pack": cajas,
+            notas,
+            salones: destino,
+            usuario,
+            fecha,
+            origen,
+            combo: comboNombre
+          });
+
+          // ✅ Descontar stock del origen
+          await descontarStock(articulo, unidades, cajas, origen);
+
+        } else {
+          // Registrar aunque no exista en stock-articulos (sin descontar)
+          await addDoc(collection(db, "stock-pedidos"), {
+            articulo,
+            unidades,
+            "caja-pack": cajas,
+            notas,
+            salones: destino,
+            usuario,
+            fecha,
+            origen,
+            combo: comboNombre
+          });
+        }
+      }
+    }
+  }
+
+  mostrarMensajeGuardado();
+  cerrarFlotante();
+  await cargarTablaPedidos();
+}
+
+
+
+document.addEventListener("DOMContentLoaded", async () => {  //salon actual guardado
+  const salonGuardado = localStorage.getItem("salonSeleccionado");
+  if (!salonGuardado) {
+    console.warn("No hay salón seleccionado en localStorage");
+    return;
+  }
+
+  const origenUI = document.getElementById("salonOrigenLabel");
+  if (origenUI) {
+    origenUI.textContent = `Pedidos hechos desde: ${salonGuardado}`;
+  }
+
+ /*  await cargarTablaPedidos();  */
+});
+
+// ✅ Cargar combos y tabla al iniciar
+window.addEventListener("DOMContentLoaded", async () => {
+  await cargarTablaPedidos();
+  await cargarCombosDesdeFirestore();
+ /*  await cargarArticulosParaAutocomplete();  */
+});
+
+
+// ✅ Exponer funciones globales si es necesario
+window.cargarCombosDesdeFirestore = cargarCombosDesdeFirestore;
+window.mostrarFlotante = mostrarFlotante;
+window.cerrarFlotante = cerrarFlotante;
+window.guardarSeleccion = guardarSeleccion;
+window.agregarArticulo = agregarArticulo;
+window.eliminarFila = eliminarFila;
+window.descontarStock = descontarStock;
+    
+ </script>
+  
+  <script>
+
+function toggleSeleccion(fila, desdeCheckbox = false) {
+  if (!fila) return;
+  if (!desdeCheckbox) {
+    const checkbox = fila.querySelector('input[type="checkbox"]');
+    if (checkbox) checkbox.checked = !checkbox.checked;
+  }
+  fila.classList.toggle('seleccionado'); // Usa una sola clase
+  toggleBotonImprimir();
+}
+
+    
+        function toggleBotonImprimir() {
+          const haySeleccionados = document.querySelectorAll('tbody tr.seleccionado').length > 0;
+          document.getElementById('btnImprimir').classList.toggle('d-none', !haySeleccionados);
+        }
+    
+        function imprimirSeleccion() {
+          const seleccionados = document.querySelectorAll('tbody tr.seleccionado');
+          if (seleccionados.length === 0) return;
+    
+          let contenido = "<table border='1' style='border-collapse: collapse; width: 100%; text-align: left;'>";
+          contenido += "<tr><th>Artículo</th><th>Unidades</th><th>Cajas</th><th>Pack</th><th>Salón Ingreso</th><th>Salón Destino</th><th>Fecha</th><th>Usuario</th></tr>";
+    
+          seleccionados.forEach(fila => {
+            const celdas = fila.querySelectorAll('td');
+            contenido += `
+              <tr>
+                <td>${celdas[1].innerText}</td>
+                <td>${celdas[2].innerText}</td>
+                <td>${celdas[3].innerText}</td>
+                <td>${celdas[4].innerText}</td>
+                <td>${celdas[5].innerText}</td>
+                <td>${celdas[6].innerText}</td>
+                <td>${celdas[7].innerText}</td>
+                <td>${celdas[8].innerText}</td>
+              </tr>
+            `;
+          });
+    
+          contenido += "</table>";
+          const ventana = window.open('', '_blank');
+          ventana.document.write(`<html><head><title>Impresión</title></head><body>${contenido}</body></html>`);
+          ventana.document.close();
+          ventana.print();
+        }
+  
+    
+    // Mostrar el filtro tipo dropdown
+    function mostrarFiltro(event, colIndex) {
+      const filtro = document.getElementById("filtroDropdown");
+      const opciones = document.getElementById("opcionesFiltro");
+      const input = document.getElementById("filtroInput");
+      opciones.innerHTML = "";
+      input.value = "";
+      columnaFiltrando = colIndex;
+    
+      const valores = new Set();
+      document.querySelectorAll(`#tablaArticulos tr`).forEach(row => {
+        const valor = row.cells[colIndex]?.innerText.trim();
+        if (valor) valores.add(valor);
+      });
+    
+      [...valores].sort().forEach(v => {
+        const opcion = document.createElement("div");
+        opcion.className = "form-check";
+        opcion.innerHTML = `
+          <input class="form-check-input" type="checkbox" value="${v}" id="check-${v}">
+          <label class="form-check-label" for="check-${v}">${v}</label>
+        `;
+        opciones.appendChild(opcion);
+      });
+    
+      const { left, bottom } = event.target.getBoundingClientRect();
+      filtro.style.left = `${left}px`;
+      filtro.style.top = `${bottom + window.scrollY}px`;
+      filtro.style.display = "block";
+    }
+    
+   
+
+   let columnaActualIndex = null;
+      let valorFiltroActual = "";
+       
+      document.querySelectorAll("thead th").forEach((th, index) => {
+        if (index === 0 || index === 7 || index === 8) return; 
+        th.style.cursor = "pointer";
+        th.addEventListener("click", (e) => {
+          columnaActualIndex = index;
+    
+          const dropdown = document.getElementById("filtroDropdown");
+          dropdown.style.left = `${e.pageX}px`;
+          dropdown.style.top = `${e.pageY}px`;
+          dropdown.style.display = "block";
+    
+          llenarOpcionesFiltro(index);
+        });
+      }); 
+    
+      // Llenar opciones de filtro únicas
+      let todasOpcionesFiltro = []; // Guardamos todas las opciones para filtrar en tiempo real
+    
+    function llenarOpcionesFiltro(index) {
+      columnaActualIndex = index;
+      const opciones = new Set();
+      document.querySelectorAll(`#tablaArticulos tr`).forEach(tr => {
+        const celda = tr.cells[index];
+        if (celda) opciones.add(celda.textContent.trim());
+      });
+    
+      todasOpcionesFiltro = Array.from(opciones).sort(); // Guardamos todas
+      mostrarOpcionesFiltradas(); // Mostramos al inicio todas
+    }
+    
+      // Buscar dentro de las opciones del dropdown
+      function filtrarOpcionesDropdown(valor) {
+        document.querySelectorAll("#opcionesFiltro label").forEach(label => {
+          const visible = label.textContent.toLowerCase().includes(valor.toLowerCase());
+          label.style.display = visible ? "" : "none";
+        });
+      }
+    
+      // Aplicar filtro seleccionado queda
+      function aplicarFiltro() {
+      const seleccionado = document.querySelector('input[name="filtroOpcion"]:checked');
+      if (!seleccionado || columnaActualIndex === null) return;
+    
+      valorFiltroActual = seleccionado.value;
+    
+      document.querySelectorAll("#tablaArticulos tr").forEach(tr => {
+        const celda = tr.cells[columnaActualIndex];
+    
+        if (valorFiltroActual === "__TODOS__") {
+          tr.style.display = "";
+        } else {
+          if (!celda || celda.textContent.trim() !== valorFiltroActual) {
+            tr.style.display = "none";
+          } else {
+            tr.style.display = "";
+          }
+        }
+      });
+    
+      document.getElementById("filtroDropdown").style.display = "none";
+    }
+    
+    // Ocultar menú de filtro al hacer clic fuera
+   document.addEventListener("click", (e) => {
+   const dropdown = document.getElementById("filtroDropdown");
+   if (dropdown.style.display === "block" && !dropdown.contains(e.target) && !e.target.closest("thead th")) {
+   dropdown.style.display = "none";
+   }
+   });
+
+
+      function limpiarFiltro() {
+      document.querySelectorAll("#tablaArticulos tr").forEach(tr => tr.style.display = "");
+      document.getElementById("filtroDropdown").style.display = "none";
+      valorFiltroActual = "";
+     }
+
+     function mostrarOpcionesFiltradas() {  
+    
+      const filtroTexto = document.getElementById("filtroInput").value.toLowerCase();
+      const opcionesDiv = document.getElementById("opcionesFiltro");
+      opcionesDiv.innerHTML = "";
+    
+      // Opción "Ver todos"
+      const todosLabel = document.createElement("label");
+      todosLabel.className = "d-block fw-bold";
+      todosLabel.innerHTML = `<input type="radio" name="filtroOpcion" value="__TODOS__"> Ver todos`;
+      opcionesDiv.appendChild(todosLabel);
+    
+      todasOpcionesFiltro.forEach(valor => {
+        if (valor.toLowerCase().includes(filtroTexto)) {
+          const label = document.createElement("label");
+          label.className = "d-block";
+          label.innerHTML = `<input type="radio" name="filtroOpcion" value="${valor}"> ${valor}`;
+          opcionesDiv.appendChild(label);
+        }
+      });
+    }
+    document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("filtroInput").addEventListener("input", mostrarOpcionesFiltradas);
+    });
+
+    //termina el filtrado
+    
+    function mostrarMensajeGuardado() {
+      const mensaje = document.getElementById("mensajeGuardado");
+      mensaje.style.display = "block";
+      mensaje.style.opacity = "1";
+    
+      setTimeout(() => {
+        mensaje.style.opacity = "0";
+        setTimeout(() => mensaje.style.display = "none", 300);
+      }, 2000);
+    }
+    
+    function mostrarMensajeEliminado() {
+  const mensaje = document.getElementById("mensaje-eliminado");
+  mensaje.style.display = "block";
+  mensaje.style.opacity = "1";
+
+  setTimeout(() => {
+    mensaje.style.opacity = "0";
+    setTimeout(() => {
+      mensaje.style.display = "none";
+    }, 500);
+  }, 2000);
+}
+
+      </script>
+<!-- Footer al final -->
+<footer class="bg-dark text-white text-center py-3 mt-auto">
+  <small>© 2025 Janos Logística. desarrollador Jose Quin.</small>
+</footer>
+  
+</body>
+
+</html>
+

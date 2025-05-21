@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ingreso de Artículos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .nav-link:hover { color: #ffc107 !important; }
+    .navbar { box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    #logo { max-height: 50px; }
+    #pantallaFlotante {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+    }
+    #pantallaFlotante .contenido {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 800px;
+      max-height: 80vh;
+      overflow-y: auto;
+      position: relative;
+    }
+    .combo-card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .combo-card h6 {
+      margin-bottom: 0.5rem;
+    }
+
+    .swal2-sm {
+    font-size: 0.8rem !important;
+    padding: 0.5em !important;
+    min-width: unset !important;
+  }
+
+  .swal2-container {
+     z-index: 9999 !important;
+   }
+
+   body {
+  padding-top: 70px; /* Ajustá este valor si tu navbar es más alto o más bajo */
+}
+
+  </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+  <!-- Navegación -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+
+    <div class="container-fluid d-flex justify-content-between align-items-center px-4">
+      <div class="d-flex align-items-center">
+        <a class="navbar-brand d-flex align-items-center" href="#">
+          <img id="logo" src="../image/Logos-Janos.png" alt="logojanos" />
+          <span class="ms-3 text-white small">Logística - Ingreso</span>
+        </a>
+        <div class="collapse navbar-collapse show ms-4">
+          <ul class="navbar-nav">
+            <li class="nav-item"><a class="nav-link" href="../index.html.html">Stock</a></li>
+            <li class="nav-item"><a class="nav-link" href="../paginas/logisticapedidos.html">Pedidos</a></li>
+          </ul>
+        </div>
+      </div>
+      <button id="btnImprimir" class="btn btn-success btn-sm me-2 d-none" onclick="imprimirSeleccion()">Imprimir</button>
+    </div>
+  </nav>
+
+  <!-- Formulario -->
+  <div class="container mt-5">
+    <h6 class="mt-4">Ingresos</h6>
+    <!-- <h5 class="text-center">Agregar Artículos</h5> -->
+    <div class="card p-3">
+      <div class="row align-items-end">
+        <div class="col-md-4">
+          <label for="articulo" class="form-label">Artículo:</label>
+          <input type="text" id="articulo" class="form-control" list="listaSugerencias" placeholder="Nombre del artículo" />
+          <datalist id="listaSugerencias"></datalist>
+        </div>
+        <div class="col-auto">
+          <label for="unidades" class="form-label">Uni.</label>
+          <input type="number" id="unidades" class="form-control" style="width: 80px;" />
+        </div>
+        <div class="col-auto">
+          <label for="cajas" class="form-label">Caj./Pack</label>
+          <input type="number" id="cajas" class="form-control" style="width: 80px;" />
+        </div>
+        <div class="col-auto">
+          <label for="rotas" class="form-label">Uni. Rotas</label>
+          <input type="number" id="rotas" class="form-control" style="width: 80px;" />
+        </div>
+        <div class="col-auto">
+          <label for="salonIngreso" class="form-label">Salón Origen</label>
+          <input type="text" id="salonIngreso" class="form-control" style="width: 120px;" />
+        </div>
+        <div class="col-auto">
+          <label for="salonDestino" class="form-label">Salón actual</label>
+          <div id="salonDestino" class="form-control bg-light" style="width: 120px; pointer-events: none;"></div>
+        </div>
+        
+        <div class="col-auto">
+          <label for="notas" class="form-label"> </label>
+          <input type="text" id="notas" class="form-control" placeholder="Observaciones..." style="width: 450px;" />
+        </div>
+        <div class="col-auto align-self-end">
+          <button class="btn btn-sm btn-primary" onclick="agregarArticulo()">Agregar</button>
+          <button class="btn btn-sm btn-warning" onclick="mostrarFlotante()">Agregar Combos</button>
+        </div>
+      </div>
+    </div>
+
+    
+    <table class="table table-striped mt-2">
+        <colgroup>
+            <col style="width: 30px;">   <!-- Checkbox -->
+            <col style="width: 100px;">  <!-- Salón Ingreso -->
+            <col style="width: 30px;">  <!-- Fecha -->
+            <col style="width: 300px;">  <!-- Artículo -->
+            <col style="width: 30px;">   <!-- Unidades -->
+            <col style="width: 30px;">   <!-- Cajas/Pack -->
+            <col style="width: 30px;">   <!-- rotas -->
+            <col style="width: 100px;">  <!-- observaciones -->
+            <col style="width: 60px;">   <!-- Acción -->
+            <col style="width: 120px;">  <!-- Usuario -->
+          </colgroup>
+
+          <thead>
+            <tr>
+              <th></th> <!-- checkbox -->
+              <th>Salón Origen</th>
+              <th>Fecha</th>
+              <th>Artículo</th>
+              <th>Unid.</th>
+              <th>Caj./Pack</th>
+              <th>Unid. Rotas</th>
+              <th>Notas</th>
+              <th>Acción</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+      <tbody id="tablaArticulos"></tbody>
+    </table>
+  </div>
+
+ <!-- aplicar filtros -->
+  <div id="filtroDropdown" class="card p-2 position-absolute shadow" style="display: none; z-index: 1000; width: 200px;">
+    <input type="text" id="filtroInput" class="form-control mb-2" placeholder="Buscar...">
+    <div id="opcionesFiltro" class="mb-2" style="max-height: 200px; overflow-y: auto;"></div>
+    
+    <button class="btn btn-primary btn-sm mt-2 w-100" onclick="aplicarFiltro()">Aplicar</button>
+  </div>
+  
+
+  <!-- Pantalla flotante -->
+  <div id="pantallaFlotante" style="display: none;"> 
+    <div class="contenido position-relative">
+      <button class="btn-close position-absolute top-0 end-0 m-3" onclick="cerrarFlotante()"></button>
+      <h5 class="mb-3">Seleccioná los combos a agregar</h5>
+      <div class="row fw-bold px-3 mb-2">
+        <div class="col-md-4">Ambientación</div>
+        <div class="col">Unidades</div>
+        <div class="col">Caj./Pack</div>
+        <div class="col">Notas</div>
+      </div>
+      <div id="contenedorCombos"></div>
+      <div class="d-flex justify-content-end gap-2 mt-3">
+        <button class="btn btn-secondary" onclick="cerrarFlotante()">Cerrar</button>
+        <button class="btn btn-primary" onclick="guardarSeleccion()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para datos del chofer -->
+<div class="modal fade" id="modalChofer" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Datos del Chofer</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-2">
+            <label class="form-label">Nombre del Chofer</label>
+            <input type="text" class="form-control" id="nombreChofer" />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">DNI</label>
+            <input type="text" class="form-control" id="dniChofer" />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Marca</label>
+            <input type="text" class="form-control" id="marcaVehiculo" />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Modelo</label>
+            <input type="text" class="form-control" id="modeloVehiculo" />
+          </div>
+          <div class="mb-2">
+            <label class="form-label">Patente</label>
+            <input type="text" class="form-control" id="patenteVehiculo" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button class="btn btn-primary" onclick="confirmarImpresion()">Imprimir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+ 
+  <div id="mensaje-eliminado" style="
+  display: none;
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 10px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  transition: opacity 0.3s ease;
+  z-index: 9999;
+">
+  Artículo eliminado correctamente
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script type="module">
+  // Importa Firebase SDK (asegúrate de que tu proyecto lo permite si no usás bundlers como Webpack)
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+  import {
+  getFirestore,
+  collection,
+  getDocs,
+  getDoc,
+  setDoc,
+  addDoc,
+  updateDoc,
+  query,
+  where,
+  orderBy,
+  Timestamp,
+  deleteDoc,
+  doc,
+  increment
+} from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBS2yswfrDzyOzlP2aJRkws8sX8930DvYY",
+    authDomain: "stock-janos.firebaseapp.com",
+    projectId: "stock-janos",
+    storageBucket: "stock-janos.firebasestorage.app",
+    messagingSenderId: "656905318444",
+    appId: "1:656905318444:web:90fd9780bb9f3c424ba189",
+    measurementId: "G-DGXEE6YHFX"
+  };
+
+  // Inicializar Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let combos = {}; // fuera de cualquier función, arriba del todo
+
+  async function cargarCombosDesdeFirestore() {
+  const combosRef = collection(db, "stock-combos");
+  const snapshot = await getDocs(combosRef);
+  combos = {}; // objeto global
+
+  snapshot.forEach((doc) => {
+    const nombreCombo = doc.id;
+    const data = doc.data();
+
+    if (Array.isArray(data.productos)) {
+      combos[nombreCombo] = data.productos.map(item => ({
+      articulo: item.articulo || "",
+      unidades: item.unidades ?? 0,
+      "caja-pack": item.cajaPack ?? 0,
+      nota: item.nota || ""  // Solo si querés mantener 'nota'
+    }));
+
+    } else {
+      combos[nombreCombo] = [];
+    }
+  });
+} //cambios 11-5
+
+function mostrarFlotante() {
+  const contenedor = document.getElementById("contenedorCombos");
+  contenedor.innerHTML = "";
+
+  Object.entries(combos).forEach(([nombre, productos]) => {
+    const card = document.createElement("div");
+    card.className = "combo-card";
+
+    const encabezado = document.createElement("h6");
+    encabezado.innerHTML = `<input type="checkbox" class="combo-checkbox" data-nombre="${nombre}"> ${nombre}`;
+    card.appendChild(encabezado);
+
+    productos.forEach((p) => {
+      const row = document.createElement("div");
+      row.className = "row mb-2";
+      row.innerHTML = `
+        <div class="col-md-4">
+          <input class="form-control articulo" value="${p.articulo}" />
+        </div>
+        <div class="col">
+          <input class="form-control unidades" type="number" value="${p.unidades}" />
+        </div>
+        <div class="col">
+          <input class="form-control cajas" type="number" value="${p['caja-pack']}" />
+        </div>
+        <div class="col">
+          <input class="form-control notas" placeholder="Notas..." value="${p.nota}" />
+        </div>
+      `;
+      card.appendChild(row);
+    });
+
+    contenedor.appendChild(card);
+  });
+
+  document.getElementById("pantallaFlotante").style.display = "flex";
+}
+
+function cerrarFlotante() {
+  document.getElementById("pantallaFlotante").style.display = "none";
+}
+
+function crearFila(ingreso, fecha, articulo, unidades, cajas, rotas, notas, usuario, docId = "") {
+  return `
+    <tr data-id="${docId}" onclick="toggleSeleccion(this)">
+      <td><input type="checkbox" onchange="toggleSeleccion(this.parentElement.parentElement, true)"></td>
+      <td contenteditable="true">${ingreso}</td>
+      <td contenteditable="true">${fecha}</td>
+      <td contenteditable="true">${articulo}</td>
+      <td contenteditable="true">${unidades}</td>
+      <td contenteditable="true">${cajas}</td>
+      <td contenteditable="true">${rotas}</td>
+      <td contenteditable="true">${notas}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="eliminarFila(this, event)">✕</button></td>
+      <td contenteditable="true">${usuario}</td>
+    </tr>
+  `;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const salonGuardado = localStorage.getItem("salonSeleccionado");
+  if (salonGuardado) {
+    document.getElementById("salonDestino").textContent = salonGuardado;
+  }
+});
+
+async function actualizarStockTotal(articulo, unidades, cajas, origen) {
+  const existe = await existeArticuloEnStockArticulos(articulo);
+
+  if (!existe) {
+    console.warn(`⚠️ El artículo "${articulo}" no existe en stock-articulos. No se actualiza stock-total.`);
+    return;
+  }
+
+  const stockTotalRef = doc(db, "stock-total", articulo);
+  const stockSnap = await getDoc(stockTotalRef);
+
+  if (stockSnap.exists()) {
+    // Si existe, actualizamos con increment
+    const pathUnidades = `salones.${origen}.unidades`;
+    const pathCajas = `salones.${origen}.cajas`;
+
+    await updateDoc(stockTotalRef, {
+      unidades: increment(unidades),
+      "caja-pack": increment(cajas),
+      [pathUnidades]: increment(unidades),
+      [pathCajas]: increment(cajas)
+    });
+  } else {
+    // Si no existe, lo creamos desde cero
+    const nuevoDoc = {
+      articulo,
+      unidades,
+      "caja-pack": cajas,
+      salones: {
+        [origen]: {
+          unidades,
+          cajas
+        }
+      }
+    };
+
+    await setDoc(stockTotalRef, nuevoDoc);
+  }
+}
+
+
+async function existeArticuloEnStockArticulos(nombreArticulo) {
+  const q = query(
+    collection(db, "stock-articulos"),
+    where("articulo", "==", nombreArticulo)
+  );
+  const querySnapshot = await getDocs(q);
+  return !querySnapshot.empty; 
+}
+ 
+async function agregarArticulo() {
+  const articulo = document.getElementById("articulo").value.trim();
+  const unidades = parseInt(document.getElementById("unidades").value) || 0;
+  const cajas = parseInt(document.getElementById("cajas").value) || 0;
+  const rotas = parseInt(document.getElementById("rotas").value) || 0; // Unidades Rotas
+  const notas = document.getElementById("notas").value.trim();
+  const ingreso = document.getElementById("salonIngreso").value;
+  const origen = document.getElementById("salonDestino").textContent;
+  const fecha = new Date().toLocaleDateString();
+  const usuario = "UsuarioDemo";
+
+  if (articulo !== "") {
+  const docRef = await addDoc(collection(db, "stock-ingreso"), {
+    articulo,
+    unidades,
+    "caja-pack": cajas,
+    rotas,
+    notas,
+    salones: ingreso,
+    origen,
+    usuario,
+    fecha
+  });
+
+  await actualizarStockTotal(articulo, unidades, cajas, origen);
+
+  const fila = crearFila(ingreso, fecha, articulo, unidades, cajas, rotas, notas, usuario, docRef.id);
+  document.getElementById("tablaArticulos").insertAdjacentHTML("beforeend", fila);
+
+  mostrarMensajeGuardado();
+}
+
+  // Limpiar inputs
+  document.getElementById("articulo").value = "";
+  document.getElementById("unidades").value = "";
+  document.getElementById("cajas").value = "";
+  document.getElementById("notas").value = "";
+  document.getElementById("salonIngreso").value = "";
+  document.getElementById("rotas").value = ""; // Limpiar "Uni. Rotas"
+}
+
+async function cargarTablaPedidos() {
+  const tabla = document.getElementById("tablaArticulos");
+  tabla.innerHTML = "";
+
+  const salonSeleccionado = localStorage.getItem("salonSeleccionado");
+
+  const pedidosRef = collection(db, "stock-ingreso");
+  const q = query(
+    pedidosRef,
+    where("origen", "==", salonSeleccionado),
+    orderBy("fecha")
+  );
+
+  const snapshot = await getDocs(q);
+
+  snapshot.forEach((docSnap) => {
+    const data = docSnap.data();
+    const fecha = data.fecha instanceof Timestamp
+      ? data.fecha.toDate().toLocaleDateString()
+      : data.fecha;
+
+    const fila = crearFila(
+      data.ingreso || "",              // 👈 ahora muestra el origen como salón
+      fecha,
+      data.articulo || "",
+      data.unidades ?? 0,
+      data["caja-pack"] ?? data.cajas ?? 0,
+      data.rotas ?? 0,
+      data.notas || "",
+      data.usuario || "",
+      docSnap.id
+    );
+
+    tabla.insertAdjacentHTML("beforeend", fila);
+  });
+}
+
+
+async function eliminarFila(btn, event) {
+  event.stopPropagation();
+  const fila = btn.closest("tr");
+  const docId = fila.getAttribute("data-id");
+
+  // Obtener datos desde las celdas
+  const celdas = fila.querySelectorAll("td");
+  const articulo = celdas[3]?.textContent.trim();
+  const unidades = parseInt(celdas[4]?.textContent.trim()) || 0;
+  const cajas = parseInt(celdas[5]?.textContent.trim()) || 0;
+  const origen = celdas[2]?.textContent.trim(); // 👈 asegúrate de que el salón esté en esta posición
+
+  if (docId) {
+    try {
+      await deleteDoc(doc(db, "stock-ingreso", docId));
+    } catch (error) {
+      console.error("Error eliminando documento:", error);
+    }
+  }
+
+  fila.remove();
+  mostrarMensajeEliminado();
+  // Descontar del stock-total considerando el salón
+  await restarStockTotal(articulo, unidades, cajas, origen);
+}
+
+async function restarStockTotal(articulo, unidades, cajas, origen) {
+  const existe = await existeArticuloEnStockArticulos(articulo);
+  if (!existe) {
+    console.warn(`⚠️ El artículo "${articulo}" no existe en stock-articulos. No se descuenta stock-total.`);
+    return;
+  }
+
+  const stockTotalRef = doc(db, "stock-total", articulo);
+  const stockSnap = await getDoc(stockTotalRef);
+
+  if (stockSnap.exists()) {
+    const data = stockSnap.data();
+    let salones = {};
+if (typeof data.salones === "object" && data.salones !== null) {
+  salones = data.salones;
+}
+
+
+    const salonActual = salones[origen] || { unidades: 0, cajas: 0 };
+    salonActual.unidades -= unidades;
+    salonActual.cajas -= cajas;
+
+    // Evitar números negativos
+    salonActual.unidades = Math.max(0, salonActual.unidades);
+    salonActual.cajas = Math.max(0, salonActual.cajas);
+
+    salones[origen] = salonActual;
+
+    await updateDoc(stockTotalRef, {
+      unidades: increment(-unidades),
+      "caja-pack": increment(-cajas),
+      salones
+    });
+  }
+}
+
+
+async function guardarSeleccion() {
+  const contenedor = document.getElementById("contenedorCombos");
+  const comboCards = document.querySelectorAll(".combo-card");
+
+  for (let card of comboCards) {
+    const comboNombre = card.querySelector(".combo-checkbox").dataset.nombre;
+    const rows = card.getElementsByClassName("row");
+
+    for (let row of rows) {
+      const articuloInput = row.querySelector(".articulo");
+      const unidadesInput = row.querySelector(".unidades");
+      const cajasInput = row.querySelector(".cajas");
+      const notasInput = row.querySelector(".notas");
+
+      if (articuloInput && unidadesInput && cajasInput && notasInput) {
+        const articulo = articuloInput.value.trim();
+        const unidades = parseInt(unidadesInput.value) || 0;
+        const cajas = parseInt(cajasInput.value) || 0;
+        const notas = notasInput.value.trim();
+        const rotas = 0;
+
+        const fecha = new Date().toLocaleDateString();
+        const usuario = "UsuarioDemo";
+        const ingreso = document.getElementById("salonIngreso").value;
+        const origen = document.getElementById("salonDestino").textContent;
+
+        try {
+          // 👉 Guardar en stock-ingreso
+          const docRef = await addDoc(collection(db, "stock-ingreso"), {
+            combo: comboNombre,
+            articulo,
+            unidades,
+            cajas,
+            rotas,
+            notas,
+            fecha,
+            usuario,
+            salones: ingreso,
+            origen
+          });
+
+          const filaHTML = crearFila(ingreso, fecha, articulo, unidades, cajas, rotas, notas, usuario, docRef.id);
+          document.getElementById("tablaArticulos").insertAdjacentHTML("beforeend", filaHTML);
+
+          mostrarMensajeGuardado();
+
+          await actualizarStockTotal(articulo, unidades, cajas, origen);
+
+        } catch (error) {
+          console.error("❌ Error al guardar en Firestore:", error);
+        }
+      }
+    }
+  }
+
+
+  cerrarFlotante();
+}
+
+ 
+window.addEventListener("DOMContentLoaded", async () => {
+  await cargarTablaPedidos();
+  await cargarCombosDesdeFirestore();
+ /*  await cargarArticulosParaAutocomplete();  */
+});
+
+
+// ✅ Exponer funciones globales si se usan desde HTML u otros scripts
+window.cargarCombosDesdeFirestore = cargarCombosDesdeFirestore;
+window.mostrarFlotante = mostrarFlotante;
+window.cerrarFlotante = cerrarFlotante;
+window.guardarSeleccion = guardarSeleccion;
+window.agregarArticulo = agregarArticulo;
+window.eliminarFila = eliminarFila;
+window.crearFila = crearFila;
+window.toggleSeleccion = toggleSeleccion;
+
+</script>
+
+
+  <script>
+
+function toggleSeleccion(fila, desdeCheckbox = false) {
+  if (!fila) return;
+  fila.classList.toggle("table-active");
+
+  if (!desdeCheckbox) {
+    const checkbox = fila.querySelector("input[type=checkbox]");
+    if (checkbox) checkbox.checked = !checkbox.checked;
+  }
+}
+
+
+    function toggleSeleccion(fila, desdeCheckbox = false) {
+      if (!desdeCheckbox) {
+        const checkbox = fila.querySelector('input[type="checkbox"]');
+        checkbox.checked = !checkbox.checked;
+      }
+      fila.classList.toggle('seleccionado');
+      toggleBotonImprimir();
+    }
+
+    function toggleBotonImprimir() {
+      const haySeleccionados = document.querySelectorAll('tbody tr.seleccionado').length > 0;
+      document.getElementById('btnImprimir').classList.toggle('d-none', !haySeleccionados);
+    }
+
+    function imprimirSeleccion() {
+      const seleccionados = document.querySelectorAll('tbody tr.seleccionado');
+      if (seleccionados.length === 0) return;
+
+      let contenido = "<table border='1' style='border-collapse: collapse; width: 100%; text-align: left;'>";
+      contenido += "<tr><th>Artículo</th><th>Unidades</th><th>Cajas</th><th>Pack</th><th>Salón Ingreso</th><th>Salón Destino</th><th>Fecha</th><th>Usuario</th></tr>";
+
+      seleccionados.forEach(fila => {
+        const celdas = fila.querySelectorAll('td');
+        contenido += `
+          <tr>
+            <td>${celdas[1].innerText}</td>
+            <td>${celdas[2].innerText}</td>
+            <td>${celdas[3].innerText}</td>
+            <td>${celdas[4].innerText}</td>
+            <td>${celdas[5].innerText}</td>
+            <td>${celdas[6].innerText}</td>
+            <td>${celdas[7].innerText}</td>
+            <td>${celdas[8].innerText}</td>
+          </tr>
+        `;
+      });
+
+      contenido += "</table>";
+      const ventana = window.open('', '_blank');
+      ventana.document.write(`<html><head><title>Impresión</title></head><body>${contenido}</body></html>`);
+      ventana.document.close();
+      ventana.print();
+    }
+// de aca arrancamos//
+let columnaFiltrando = null;
+
+// Detectar clic en encabezado de tabla
+document.querySelectorAll("thead th").forEach((th, index) => {
+  if (index === 0 || index === 8) return; // Ignorar checkbox y columna de acción
+  th.style.cursor = "pointer";
+  th.addEventListener("click", (e) => mostrarFiltro(e, index));
+});
+
+// Mostrar el filtro tipo dropdown
+function mostrarFiltro(event, colIndex) {
+  const filtro = document.getElementById("filtroDropdown");
+  const opciones = document.getElementById("opcionesFiltro");
+  const input = document.getElementById("filtroInput");
+  opciones.innerHTML = "";
+  input.value = "";
+  columnaFiltrando = colIndex;
+
+  const valores = new Set();
+  document.querySelectorAll(`#tablaArticulos tr`).forEach(row => {
+    const valor = row.cells[colIndex]?.innerText.trim();
+    if (valor) valores.add(valor);
+  });
+
+  [...valores].sort().forEach(v => {
+    const opcion = document.createElement("div");
+    opcion.className = "form-check";
+    opcion.innerHTML = `
+      <input class="form-check-input" type="checkbox" value="${v}" id="check-${v}">
+      <label class="form-check-label" for="check-${v}">${v}</label>
+    `;
+    opciones.appendChild(opcion);
+  });
+
+  const { left, bottom } = event.target.getBoundingClientRect();
+  filtro.style.left = `${left}px`;
+  filtro.style.top = `${bottom + window.scrollY}px`;
+  filtro.style.display = "block";
+}
+
+// Aplicar filtro al hacer clic en el botón
+function aplicarFiltro() {
+  const filtro = filtroSeleccionado.trim().toLowerCase();
+  const columnaIndex = indiceColumnaSeleccionada;
+
+  const filas = document.querySelectorAll("#tablaArticulos tr");
+  filas.forEach((fila, i) => {
+    if (i === 0) return; // Saltear encabezado si aplica
+    const celda = fila.cells[columnaIndex];
+    if (!filtro || celda.textContent.toLowerCase().includes(filtro)) {
+      fila.style.display = "";
+    } else {
+      fila.style.display = "none";
+    }
+  });
+
+  document.getElementById("filtroDropdown").style.display = "none";
+}
+
+window.addEventListener("click", e => {
+  const dropdown = document.getElementById("filtroDropdown");
+  if (!dropdown.contains(e.target) && !e.target.closest("th")) {
+    dropdown.style.display = "none";
+  }
+});
+let columnaActualIndex = null;
+  let valorFiltroActual = "";
+
+  // Mostrar el menú de filtro al hacer clic en el encabezado
+  document.querySelectorAll("thead th").forEach((th, index) => {
+    if (index === 0 || index === 7 || index === 8) return; // Ignorar checkbox, acción y usuario
+    th.style.cursor = "pointer";
+    th.addEventListener("click", (e) => {
+      columnaActualIndex = index;
+
+      // Mostrar menú cerca del mouse
+      const dropdown = document.getElementById("filtroDropdown");
+      dropdown.style.left = `${e.pageX}px`;
+      dropdown.style.top = `${e.pageY}px`;
+      dropdown.style.display = "block";
+
+      llenarOpcionesFiltro(index);
+    });
+  });
+
+  // Llenar opciones de filtro únicas
+  let todasOpcionesFiltro = []; // Guardamos todas las opciones para filtrar en tiempo real
+
+function llenarOpcionesFiltro(index) {
+  columnaActualIndex = index;
+  const opciones = new Set();
+  document.querySelectorAll(`#tablaArticulos tr`).forEach(tr => {
+    const celda = tr.cells[index];
+    if (celda) opciones.add(celda.textContent.trim());
+  });
+
+  todasOpcionesFiltro = Array.from(opciones).sort(); // Guardamos todas
+  mostrarOpcionesFiltradas(); // Mostramos al inicio todas
+}
+
+  // Buscar dentro de las opciones del dropdown
+  function filtrarOpcionesDropdown(valor) {
+    document.querySelectorAll("#opcionesFiltro label").forEach(label => {
+      const visible = label.textContent.toLowerCase().includes(valor.toLowerCase());
+      label.style.display = visible ? "" : "none";
+    });
+  }
+
+  // Aplicar filtro seleccionado
+  function aplicarFiltro() {
+  const seleccionado = document.querySelector('input[name="filtroOpcion"]:checked');
+  if (!seleccionado || columnaActualIndex === null) return;
+
+  valorFiltroActual = seleccionado.value;
+
+  document.querySelectorAll("#tablaArticulos tr").forEach(tr => {
+    const celda = tr.cells[columnaActualIndex];
+
+    if (valorFiltroActual === "__TODOS__") {
+      tr.style.display = "";
+    } else {
+      if (!celda || celda.textContent.trim() !== valorFiltroActual) {
+        tr.style.display = "none";
+      } else {
+        tr.style.display = "";
+      }
+    }
+  });
+
+  document.getElementById("filtroDropdown").style.display = "none";
+}
+
+  // Ocultar menú de filtro al hacer clic fuera
+  document.addEventListener("click", (e) => {
+    const dropdown = document.getElementById("filtroDropdown");
+    if (!dropdown.contains(e.target) && !e.target.closest("thead th")) {
+      dropdown.style.display = "none";
+    }
+  });
+  function limpiarFiltro() {
+  document.querySelectorAll("#tablaArticulos tr").forEach(tr => tr.style.display = "");
+  document.getElementById("filtroDropdown").style.display = "none";
+  valorFiltroActual = "";
+}
+function mostrarOpcionesFiltradas() {
+   
+
+  const filtroTexto = document.getElementById("filtroInput").value.toLowerCase();
+  document.getElementById("filtroInput").addEventListener("input", mostrarOpcionesFiltradas);
+  const opcionesDiv = document.getElementById("opcionesFiltro");
+  opcionesDiv.innerHTML = "";
+
+  // Opción "Ver todos"
+  const todosLabel = document.createElement("label");
+  todosLabel.className = "d-block fw-bold";
+  todosLabel.innerHTML = `<input type="radio" name="filtroOpcion" value="__TODOS__"> Ver todos`;
+  opcionesDiv.appendChild(todosLabel);
+
+  todasOpcionesFiltro.forEach(valor => {
+    if (valor.toLowerCase().includes(filtroTexto)) {
+      const label = document.createElement("label");
+      label.className = "d-block";
+      label.innerHTML = `<input type="radio" name="filtroOpcion" value="${valor}"> ${valor}`;
+      opcionesDiv.appendChild(label);
+    }
+  });
+}
+//termina el filtrado
+
+function mostrarMensajeEliminado() {
+  const mensaje = document.getElementById("mensaje-eliminado");
+  mensaje.style.display = "block";
+  mensaje.style.opacity = "1";
+
+  setTimeout(() => {
+    mensaje.style.opacity = "0";
+    setTimeout(() => {
+      mensaje.style.display = "none";
+    }, 500);
+  }, 2000);
+}
+
+function mostrarMensajeGuardado() {
+  Swal.fire({
+    toast: true,
+    position: 'top-end',
+    icon: 'success',
+    title: 'Artículo agregado',
+    showConfirmButton: false,
+    timer: 1000,
+    timerProgressBar: true,
+    customClass: {
+      popup: 'swal2-sm'
+    }
+  });
+}
+  </script>
+
+<!-- Footer al final -->
+<footer class="bg-dark text-white text-center py-3 mt-auto">
+  <small>© 2025 Janos Logística. desarrollador Jose Quin.</small>
+</footer>
+</body>
+</html>
